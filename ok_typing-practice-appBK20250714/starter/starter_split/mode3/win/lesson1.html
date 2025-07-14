@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="../../mode1/css/beginner.css">
   <!-- mode3独自のスタイルで上書き -->
   <link rel="stylesheet" href="../css/style.css">
+  <!-- 新しい学習システム専用CSS -->
+  <link rel="stylesheet" href="css/problem-engine.css">
 
   <!-- ★ この <style> を一番最後に置いて共通 CSS を上書き ★ -->
   <style>
@@ -46,6 +48,14 @@
 
     <div id="practice-text" class="practice-text"></div>
     <div id="retry-message" hidden>もう一度！</div>
+    
+    <!-- 学習進捗表示 -->
+    <div id="progress-display" style="text-align: center; margin: 1rem 0;">
+      <div id="curriculum-title" style="font-size: 1.2rem; font-weight: bold; color: #666;"></div>
+      <div id="progress-bar" style="width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; margin: 0.5rem 0; overflow: hidden;">
+        <div id="progress-fill" style="height: 100%; background: linear-gradient(90deg, #007bff, #28a745); width: 0%; transition: width 0.3s ease;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- カウントダウン -->
@@ -76,6 +86,7 @@
       <div id="control-buttons">
         <button id="start-btn">Start</button>
         <button id="reset-btn">Reset</button>
+        <button id="skip-btn" style="margin-left: 0.5rem; background-color: #ffc107; color: #212529;">Skip</button>
         <a href="practice.html" style="margin-left:1rem;">実践練習へ →</a>
       </div>
     </div>
@@ -86,22 +97,42 @@
 
   <!-- スクリプト -->
   <script>
-    // Start ボタン
+    // Start ボタン - 新しい学習システムを開始
     document.getElementById('start-btn').addEventListener('click', () => {
-      document.getElementById('welcome-message').style.display = 'none';
-      document.getElementById('main-display-wrapper').style.display = 'block';
-      if (typeof startCountdown === 'function') startCountdown();
+      if (window.mode3ProblemEngine) {
+        window.mode3ProblemEngine.start();
+        updateProgressDisplay();
+      }
     });
 
-    // Reset ボタン
+    // Reset ボタン - 学習システムをリセット
     document.getElementById('reset-btn').addEventListener('click', () => {
-      document.getElementById('main-display-wrapper').style.display = 'none';
-      document.getElementById('practice-text').innerHTML = '';
-      document.getElementById('input-field').value = '';
-      document.getElementById('retry-message').hidden = true;
-      document.getElementById('welcome-message').style.display = 'block';
-      if (typeof resetGame === 'function') resetGame();
+      if (window.mode3ProblemEngine) {
+        window.mode3ProblemEngine.reset();
+        document.getElementById('progress-fill').style.width = '0%';
+        document.getElementById('curriculum-title').textContent = '';
+      }
     });
+
+    // Skip ボタン - 現在の問題をスキップ
+    document.getElementById('skip-btn').addEventListener('click', () => {
+      if (window.mode3ProblemEngine && window.mode3ProblemEngine.skip) {
+        window.mode3ProblemEngine.skip();
+      }
+    });
+
+    // 進捗表示を更新する関数
+    function updateProgressDisplay() {
+      // この関数は problem-engine.js から呼び出される
+      if (window.mode3ProblemEngine && window.mode3ProblemEngine.getProgress) {
+        const progress = window.mode3ProblemEngine.getProgress();
+        document.getElementById('curriculum-title').textContent = progress.title || '';
+        document.getElementById('progress-fill').style.width = progress.percentage + '%';
+      }
+    }
+
+    // グローバルに公開（problem-engine.jsから呼び出し可能にする）
+    window.updateProgressDisplay = updateProgressDisplay;
   </script>
 
   <!-- 既存 JS -->
