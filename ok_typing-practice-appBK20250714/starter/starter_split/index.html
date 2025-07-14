@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日本語タイピング練習 – モード選択</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f5f5;
+    }
+    h1 {
+      margin-bottom: 2rem;
+      color: #333;
+    }
+    .mode-container {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .mode-card {
+      width: 220px;
+      height: 120px;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .mode-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .mode-card.mode2 { background:#2196f3; }
+    .mode-card.mode3 { background:#9c27b0; }
+    
+    .mode-card.trial { background:#ff9800; }
+    footer {
+      position: absolute;
+      bottom: 1rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>生成AIタイピングマスター</h1>
+  </h1>モード選択</h1><br /><br />
+
+
+
+  <div class="mode-container">
+    <a class="mode-card mode1" href="mode1/mode1.html">
+      <strong>Mode1</strong><br />
+      あかさたな などの<br/>
+      　母音を基準に<br/>
+        文字を反復練習
+    </a>
+    <a class="mode-card mode2" href="mode2/mode2.html">
+      <strong>Mode2</strong><br/>
+       　濁点・半濁点<br/>
+       拗音(小文字) 練習
+    </a>
+    <a class="mode-card mode3 disabled" title="準備中">
+      <strong>Mode3</strong><br />
+      英数・ひらがな・カタカナ<br />
+      【IME のモード切り替え】
+    </a>
+    <a class="mode-card trial" href="trial/traial.html">
+      <strong>Trial</strong><br />
+      お試しモード
+    </a>
+  </div>
+
+  <footer>
+    © 2025 Typing Practice App
+  </footer>
+</body>
+</html>

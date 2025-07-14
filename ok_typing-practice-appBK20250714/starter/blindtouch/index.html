@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Blind-Touch Trainer</title>
+  <link rel="stylesheet" href="style.css"><!-- 既存の style.css を使う -->
+</head>
+<body>
+  <h1>Blind-Touch Trainer</h1>
+
+  <!-- お題 -->
+  <h2 id="practice-text">Loading…</h2>
+
+  <!-- 黒帯（○× を重ねるエリア） -->
+  <div id="typed-display"></div>
+
+  <!-- 指レジェンドとキーボード -->
+  <div id="legendWrap"></div>
+  <div id="keyboard"></div>
+
+  <!-- 統計＆次の問題ボタン -->
+  <div id="retry-message">正: 0  誤: 0  WPM: 0</div>
+  <button id="nextBtn" disabled>次の問題 ▶</button>
+
+  <!-- 隠し入力 -->
+  <input id="hiddenInput" autofocus style="opacity:0;position:absolute;left:-9999px;">
+
+  <!-- ▼ スクリプトは </body> 直前に並べる ▼ -->
+  <script src="keyboard-render.js"></script>
+  <script src="problem-engine.js" defer></script>
+  <script>
+    /* ページ読み込み完了後に hiddenInput にフォーカス */
+    window.addEventListener('load', () => {
+      document.getElementById('hiddenInput').focus();
+    });
+  </script>
+</body>
+</html>

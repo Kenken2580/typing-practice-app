@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Mode 3 – OS 選択</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body{font-family:sans-serif;text-align:center;margin-top:4rem;}
+    .os-btn{display:inline-block;margin:1rem;padding:1rem 2rem;font-size:1.2rem;border-radius:8px;border:none;cursor:pointer;background:#2196f3;color:#fff;min-width:220px;}
+    .note{margin-top:2rem;color:#666;font-size:0.9rem;}
+  </style>
+</head>
+<body>
+  <h1>Mode 3 – IME 切替レッスン</h1>
+  <h2>ご使用の OS を選択してください</h2>
+  <button class="os-btn" onclick="selectOS('win')">Windows を使っています</button>
+  <button class="os-btn" onclick="selectOS('mac')">Mac を使っています</button>
+  <p class="note">もし Windows と Mac を間違えて選んだ場合は、下の<br><strong>「OS を選び直す」</strong> ボタンを押してください。</p>
+  <button style="margin-top:1rem" onclick="resetOS()">OS を選び直す</button>
+
+  <script>
+    function selectOS(os){
+      try{localStorage.setItem('osPreference',os);}catch(e){}
+      location.href = os + '/lesson1.html';
+    }
+    function resetOS(){
+      try{localStorage.removeItem('osPreference');}catch(e){}
+      alert('OS の設定をリセットしました。もう一度選択してください。');
+      location.reload();
+    }
+  </script>
+</body>
+</html>

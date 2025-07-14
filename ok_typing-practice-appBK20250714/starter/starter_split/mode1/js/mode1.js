@@ -1,0 +1,199 @@
+console.log('%c<<< mode1.js LOADED >>>','background:yellow;color:black');
+document.addEventListener('DOMContentLoaded', () => {
+  // DOM要素
+  const modeButtons = document.getElementById('mode-buttons'); // 存在しない場合もある
+
+  const mode1Btn = modeButtons.querySelector('[data-mode="1"]');
+  const mode2Btn = modeButtons.querySelector('[data-mode="2"]');
+  const mode3Btn = modeButtons.querySelector('[data-mode="3"]');
+  const tempoSlider = document.getElementById('tempo-slider');
+  const tempoValue = document.getElementById('tempo-value');
+  const tempoControl = document.getElementById('tempo-control');
+  const presetBtns = document.querySelectorAll('.tempo-preset');
+  const tempoMessage = document.getElementById('tempo-message');
+  const startBtn = document.getElementById('start-btn');
+
+  if (!tempoControl || !tempoMessage || !startBtn) {
+    console.error('Mode1 script: Required elements not found.');
+    return;
+  }
+
+  // テンポ設定用
+  let audioCtx = null;
+  let previewTimer = null;
+  const DEFAULT_BPM = 100;
+
+  // --- 関数 ---
+
+  function initAudio() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.error('Web Audio API is not supported in this browser.');
+    }
+  }
+
+  function playClick() {
+    if (!audioCtx) return;
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    // 周波数・音量を script.js の playClick と統一
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(window.clickVolume !== undefined ? window.clickVolume : 0.05, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.05);
+  }
+
+  function startTempoPreview() {
+    stopTempoPreview();
+    if (!tempoSlider.value) return;
+    const bpm = parseInt(tempoSlider.value, 10);
+    const interval = 60000 / bpm;
+    previewTimer = setInterval(playClick, interval);
+  }
+
+  function stopTempoPreview() {
+    if (previewTimer) {
+      clearInterval(previewTimer);
+      previewTimer = null;
+    }
+  }
+
+  function generateMode1Text() {
+    // 重複させずオリジナルテキストを返す
+    if(window.defaultLines) return window.defaultLines.slice();
+    const baseKana = ['あ','か','さ','た','な','は','ま','や','ら','わ'];
+    return baseKana;
+  }
+
+  function selectMode(mode) {
+    window.currentMode = mode; // 現在のモードをグローバルに設定
+    if(typeof currentMode !== 'undefined'){ currentMode = mode; }
+    stopTempoPreview();
+    if (mode === 1) {
+      // Mode1: UI表示とテキスト生成
+      if(modeButtons && mode1Btn){
+        modeButtons.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        mode1Btn.classList.add('active');
+      }
+      tempoControl.style.display = 'flex';
+      tempoMessage.hidden = false;
+      window.lines = generateMode1Text();
+      // script.js 内で参照される固定配列 lines の内容も更新して同期
+      if (typeof lines !== 'undefined') {
+        lines.length = 0;
+        lines.push(...window.lines);
+      }
+      tempoSlider.value = DEFAULT_BPM;
+      if(tempoValue) tempoValue.textContent = `${DEFAULT_BPM} BPM`;
+      if (typeof applyBPM === 'function') {
+        applyBPM(DEFAULT_BPM);
+      }
+    } else {
+      // Mode2, 3: 既存の関数を呼び出し、Mode1用UIを非表示
+      if (typeof setMode === 'function') {
+        setMode(mode);
+      }
+      tempoControl.style.display = 'none';
+      tempoMessage.hidden = true;
+      if (window.defaultLines) {
+        window.lines = window.defaultLines.slice();
+      }
+    }
+  }
+
+  // --- イベントリスナー ---
+
+  if(mode1Btn)   mode1Btn.addEventListener('click', (e) => { e.stopPropagation(); selectMode(1); });
+  if(mode2Btn)   mode2Btn.addEventListener('click', (e) => { e.stopPropagation(); selectMode(2); });
+  if(mode3Btn)   mode3Btn.addEventListener('click', (e) => { e.stopPropagation(); selectMode(3); });
+
+  // プリセットボタン処理
+  presetBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+       initAudio();
+      // 現在のモードボタンを取得しておく
+       const modeKeepBtn = modeButtons ? modeButtons.querySelector(`button[data-mode="${window.currentMode}"]`) : null;
+      const bpmStr = btn.dataset.bpm;
+      if(bpmStr === 'custom'){
+        // スライダー表示
+        tempoSlider.style.display = 'block';
+        presetBtns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        playClick(); // current slider value
+        // カスタム選択後もモードボタンの選択を維持
+        if(modeKeepBtn && modeButtons){
+          modeButtons.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+          modeKeepBtn.classList.add('active');
+        }
+      }else{
+        tempoSlider.style.display = 'none';
+        const bpm = +bpmStr;
+        tempoSlider.value = bpm;
+        if(tempoValue) tempoValue.textContent = `${bpm} BPM`;
+        if(typeof applyBPM==='function') applyBPM(bpm); // グローバル BPM 更新
+        playClick();
+        // preview beat
+        clearInterval(previewTimer);
+        const interval = 60000 / bpm;
+        previewTimer = setInterval(playClick, interval);
+        // モードボタンの選択状態が解除されることがあるため保持
+        if(modeKeepBtn && modeButtons){
+          modeButtons.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+          modeKeepBtn.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // スライダー変更
+  tempoSlider.addEventListener('input', ()=>{
+    if(tempoValue) tempoValue.textContent = `${tempoSlider.value} BPM`;
+    const bpm = +tempoSlider.value;
+    if(typeof applyBPM==='function') applyBPM(bpm);
+    playClick();
+    clearInterval(previewTimer);
+    const interval = 60000 / bpm;
+    previewTimer = setInterval(playClick, interval);
+  });
+
+  tempoSlider.addEventListener('change', startTempoPreview);
+  
+  startBtn.addEventListener('click', () => {
+    // Mode1がアクティブな場合、スライダーで設定したBPMをゲームに適用
+    if (mode1Btn.classList.contains('active')) {
+      const bpm = parseInt(tempoSlider.value, 10);
+      if (typeof applyBPM === 'function') {
+        applyBPM(bpm);
+      }
+    }
+    // テンポプレビューを停止
+    stopTempoPreview();
+  });
+
+  // リセット処理の拡張
+  if (typeof window.resetGame === 'function') {
+    const originalResetGame = window.resetGame;
+    window.resetGame = function() {
+      originalResetGame.apply(this, arguments);
+      stopTempoPreview();
+      tempoControl.style.display = 'none';
+      tempoMessage.hidden = true;
+      if (window.defaultLines) {
+        window.lines = window.defaultLines.slice();
+      }
+      // デフォルトのMode2に戻す処理を無効化（常に拡大レイアウトを維持）
+      // if (typeof setMode === 'function') {
+      //   setMode(2);
+      // }
+    };
+  }
+  
+  // 初期化時はどのモードも未選択にしてユーザーに選択させる
+  // selectMode(1); // <== 無効化
+});

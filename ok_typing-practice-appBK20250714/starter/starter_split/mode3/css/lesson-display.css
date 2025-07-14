@@ -1,0 +1,5 @@
+/* lesson-display.css : Mode3 お題表示ボックス */
+#lesson-display{display: flex;flex-wrap: wrap;justify-content: center;gap: 5px;margin: 10px 0;max-width: 800px;margin-left: auto;margin-right: auto;text-align:center}
+#lesson-display .box{border: 1px solid #ccc;padding: 5px 10px;border-radius: 4px;min-width: 20px;text-align: center;user-select:none}
+#lesson-display .current{background-color: #ffff00;border-color: #ffa500;}
+#lesson-display .done{background-color: #e6ffe6;border-color: #00cc00;color:#777;}

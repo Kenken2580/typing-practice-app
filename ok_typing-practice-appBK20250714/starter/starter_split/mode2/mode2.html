@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>日本語タイピング練習</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/beginner.css">
+</head>
+
+<body>
+  <h1>日本語タイピング練習</h1>
+
+  <!-- ウェルカムメッセージ -->
+  <div id="welcome-message">
+    <h2>ビギナーステージ</h2>
+    <p>Modeを選んで <span class="start-btn-inline">Start</span> を押してください</p>
+  </div>
+
+  <!-- メインのタイピング表示エリアのコンテナ -->
+  <div id="main-display-wrapper" style="display: none;">
+    <!-- 中央のかな文字表示とオーバーレイ -->
+    <div id="main-kana-wrapper">
+      <div id="next-char-container">
+        <div id="next-char"></div>
+      </div>
+    </div>
+    
+    <!-- ローマ字表示 -->
+    <div id="next-roma-container">
+      <div id="roma-container">
+        <div id="next-roma"></div>
+      </div>
+    </div>
+    
+    <!-- メッセージはキーボードの上に移動しました -->
+  </div>
+
+  <!-- カウントダウンオーバーレイ -->
+  <div id="countdown-overlay" hidden>3</div>
+
+  <!-- 拡大表示されるキーのコンテナ -->
+  <div id="enlarged-key-container">
+    <!-- ここに拡大されたキーのイメージがJSで動的に挿入されます -->
+  </div>
+
+  <div id="practice-text" class="practice-text"></div>
+  <div id="repetition-counter" class="rep-counter" hidden style="font-size:2rem;margin-top:0.3rem"></div>
+  <input id="input-field" autocomplete="off">
+
+  <!-- もう一度メッセージ -->
+  <div id="retry-message" hidden>もう一度！</div>
+
+  <!-- 仮想キーボードと運指レジェンドのコンテナ -->
+  <div id="keyboard-and-fingers">
+    <!-- モードボタン -->
+    <div id="mode-buttons">
+      <!-- 初期表示時にどのモードも未選択にするため active クラスを除去 -->
+
+      <!-- テンポ調整（Mode2で表示）-->
+      <div id="tempo-control" style="display: flex; flex-direction:column; align-items:center; margin-bottom: 1rem; padding: 0.5rem; background-color: #333; border-radius: 5px; gap:8px;">
+        <div id="tempo-message" hidden style="margin-right: 15px; color: #ffc107; font-weight: bold;">テンポをスライダーで決めてください（音を確認できます）</div>
+      <!-- プリセットボタン -->
+        <div id="tempo-preset-buttons" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+          <button class="tempo-preset" data-bpm="60">ゆっくり
+          </button><button class="tempo-preset" data-bpm="100">標準
+          </button><button class="tempo-preset" data-bpm="140">はやめ
+          </button><button class="tempo-preset" data-bpm="custom">カスタム
+          </button>
+        </div>
+        <!-- カスタムスライダー -->
+        <input type="range" id="tempo-slider" min="20" max="160" value="100" style="display:none;width:100%;">
+        <span id="tempo-value" style="margin-left: 10px; min-width: 60px; color: white;">90 BPM</span>
+      </div>
+      <!-- 音量調整 -->
+      <div id="volume-control" style="display:flex;justify-content:center;align-items:center;margin-bottom:1rem;padding:0.5rem;background-color:#333;border-radius:5px;gap:8px;">
+        <label for="volume-slider" style="color:white;font-size:0.9rem;white-space:nowrap;">VOL</label>
+        <input type="range" id="volume-slider" min="0" max="800" value="300" style="flex:1;">
+      </div>
+    </div>
+
+    <!-- 仮想キーボード -->
+    <div id="keyboard"></div>
+
+    <!-- 運指レジェンド -->
+    <div id="finger-legend">
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-pinky"><div class="finger-label">左小指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-ring"><div class="finger-label">左薬指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-middle"><div class="finger-label">左中指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-index"><div class="finger-label">左人差指</div></div>
+      </div>
+      <div class="finger-gap-large"></div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-thumb"><div class="finger-label">親指</div></div>
+      </div>
+      <div class="finger-gap-small"></div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-index"><div class="finger-label">右人差指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-middle"><div class="finger-label">右中指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-ring"><div class="finger-label">右薬指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-pinky"><div class="finger-label">右小指</div></div>
+      </div>
+      <!-- 操作ボタンコンテナ -->
+      <div id="control-buttons">
+        <button id="start-btn">Start</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // スタートボタンが押されたらウェルカムメッセージを非表示にし、ゲーム開始
+    document.getElementById('start-btn').addEventListener('click', function() {
+      // まず画面を切り替えてからゲーム開始関数を呼ぶ
+      document.getElementById('welcome-message').style.display = 'none';
+      document.getElementById('main-display-wrapper').style.display = 'block';
+      // カウントダウンを開始
+      if (typeof startCountdown === 'function') {
+        startCountdown();
+      }
+    });
+    
+    // リセットボタンが押されたらウェルカムメッセージを再表示し、ゲームをリセット
+    document.getElementById('reset-btn').addEventListener('click', function() {
+      // メイン表示を非表示にする
+      document.getElementById('main-display-wrapper').style.display = 'none';
+      // 練習テキストをクリア
+      document.getElementById('practice-text').innerHTML = '';
+      // 入力フィールドをクリア
+      document.getElementById('input-field').value = '';
+      // 「もう一度！」メッセージを非表示
+      document.getElementById('retry-message').hidden = true;
+      // ウェルカムメッセージを表示
+      document.getElementById('welcome-message').style.display = 'block';
+      
+      // スタートボタンを有効化
+      document.getElementById('start-btn').disabled = false;
+      
+      // ページの初期状態に戻る - script.jsのリセット関数があれば呼び出す
+      if (typeof resetGame === 'function') {
+        resetGame();
+      }
+    });
+  </script>
+  
+  <style>
+    #welcome-message {
+      text-align: center;
+      margin: 20px auto;
+      font-family: sans-serif;
+      position: relative; /* absoluteからrelativeに変更 */
+      z-index: 10;
+    }
+    
+    #welcome-message h2 {
+      font-size: 24px;
+      margin-bottom: 40px;
+      font-weight: normal;
+    }
+    
+    #welcome-message p {
+      font-size: 16px;
+    }
+    
+    .start-btn-inline {
+      display: inline-block;
+      background-color: #337ab7;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+  </style>
+
+  <script src="js/script.js"></script>
+  <script>
+    // Mode2を明示的に設定
+    window.currentMode = 2;
+    // ページ読み込み後にsetMode(2)を呼び出し
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof setMode === 'function') {
+        setMode(2);
+      }
+    });
+  </script>
+  <script src="js/mode2.js" defer></script>
+</body>
+</html>

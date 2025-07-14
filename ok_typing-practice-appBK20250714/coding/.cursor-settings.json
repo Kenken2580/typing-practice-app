@@ -1,0 +1,9 @@
+{
+  "ai.autocomplete": false,
+  "ai.experimentalTools": false,
+  "ai.comment": false,
+  "ai.diffMode": "off",
+  "ai.model": "gpt-4o",
+  "ai.sendEntireFile": false,
+  "ai.taskPromptTemplate": "あなたは最小限の修正のみを提案してください。"
+}

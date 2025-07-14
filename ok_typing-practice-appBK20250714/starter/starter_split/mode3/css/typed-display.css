@@ -1,0 +1,55 @@
+/* typed-display.css : 入力済み文字表示用黒帯 */
+#typed-display {
+  background-color: black;
+  color: white;
+  padding: 10px;
+  margin: 0;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-family: monospace;
+  font-size: 18px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ▼▼ ここを追加 ── キーボードと同じ 846px にして中央寄せ ▼▼ */
+#typed-display {
+  width: 846px;   /* ← DevTools で見たキーボード幅 */
+  margin: 0 auto; /* ← 左右余白を自動計算して中央に */
+}
+
+/* ★ 文字を縦横ど真ん中に置くための追加分 ★ */
+#typed-display {
+  display: flex;            /* フレックスレイアウトに */
+  align-items: center;      /* 垂直方向を中央揃え        */
+  justify-content: center;  /* 水平方向も中央揃え        */
+  height: 30px;             /* 元の高さをキープ          */
+  padding: 0 10px;          /* 上下 0 にして余白を左右だけ */
+  line-height: normal;      /* 不要になったのでリセット  */
+}
+
+/* Ensure finger legend sits below the black bar for Mode3 */
+#keyboard-and-fingers #finger-legend {
+  margin-top: 12px;  /* slightly separate from black bar */
+  transform: none;   /* cancel the negative translate from Mode1 CSS */
+}
+
+#keyboard-and-fingers .finger-wrapper {
+  transform: none;   /* reset each finger icon position */
+}
+
+.typed-correct {
+  color: #ffcc00; /* ユーザー入力は黄色で表示 */
+}
+
+.typed-incorrect {
+  color: red;
+}
+
+.info-message {
+  color: white; /* インストラクションは白字で表示 */
+  font-weight: bold;
+}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Mode 3 – IME 切替レッスン (Windows)</title>
+
+  <!-- 既存スタイル -->
+  <link rel="stylesheet" href="../../mode1/css/style.css">
+  <link rel="stylesheet" href="../css/lesson-display.css">
+  <link rel="stylesheet" href="../css/typed-display.css">
+  <link rel="stylesheet" href="../../mode1/css/beginner.css">
+  <!-- mode3独自のスタイルで上書き -->
+  <link rel="stylesheet" href="../css/style.css">
+
+  <!-- ★ この <style> を一番最後に置いて共通 CSS を上書き ★ -->
+  <style>
+    /* body の余白を消す（上に 8px 空くのを防ぐ） */
+    body { margin: 0; }
+
+    /* キーボード＋運指＋帯の縦並びを“通常順”に戻す */
+    #keyboard-and-fingers {
+      display: flex;           /* 既に flex ならこの行は不要 */
+      flex-direction: column;  /* ← column-reverse を打ち消す */
+      align-items: center;     /* 中央寄せ（お好みで） */
+    }
+
+    /* 並び順（order）の指定は任意。無くても DOM 順どおりに並ぶ */
+    #typed-display { order: 0; }
+    #finger-legend { order: 1; margin-top: 12px; } /* 少しだけ隙間 */
+    #keyboard      { 
+      order: 2; 
+      grid-template-columns: repeat(30, 20px) !important;
+      width: 774px !important; /* 30列 × 20px + 29個のgap × 6px + padding 20px = 774px */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mode 3 – 半角/かな/カナ 切替 (Windows)</h1>
+
+    <!-- レッスン表示 -->
+    <div id="lesson-display"></div>
+
+    <!-- 非表示入力フィールド -->
+    <input type="text" id="input-field" style="opacity:0;position:absolute;" autofocus>
+
+    <div id="practice-text" class="practice-text"></div>
+    <div id="retry-message" hidden>もう一度！</div>
+  </div>
+
+  <!-- カウントダウン -->
+  <div id="countdown-overlay" hidden>3</div>
+
+  <!-- 仮想キーボードと運指レジェンド -->
+  <div id="keyboard-and-fingers">
+    <div id="mode-buttons" style="display:none"></div>
+
+    <!-- ★ 黒帯（先頭に書かれている） -->
+    <div id="typed-display"></div>
+
+    <!-- 運指アイコン群 -->
+    <div id="finger-legend">
+      <div class="finger-wrapper"><div class="finger-shape finger-left-pinky"><div class="finger-label">左小指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-left-ring"><div class="finger-label">左薬指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-left-middle"><div class="finger-label">左中指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-left-index"><div class="finger-label">左人差指</div></div></div>
+      <div class="finger-gap-large"></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-thumb"><div class="finger-label">親指</div></div></div>
+      <div class="finger-gap-small"></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-right-index"><div class="finger-label">右人差指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-right-middle"><div class="finger-label">右中指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-right-ring"><div class="finger-label">右薬指</div></div></div>
+      <div class="finger-wrapper"><div class="finger-shape finger-right-pinky"><div class="finger-label">右小指</div></div></div>
+
+      <!-- 操作ボタン -->
+      <div id="control-buttons">
+        <button id="start-btn">Start</button>
+        <button id="reset-btn">Reset</button>
+        <a href="practice.html" style="margin-left:1rem;">実践練習へ →</a>
+      </div>
+    </div>
+
+    <!-- キーボード本体 -->
+    <div id="keyboard"></div>
+  </div>
+
+  <!-- スクリプト -->
+  <script>
+    // Start ボタン
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('welcome-message').style.display = 'none';
+      document.getElementById('main-display-wrapper').style.display = 'block';
+      if (typeof startCountdown === 'function') startCountdown();
+    });
+
+    // Reset ボタン
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('main-display-wrapper').style.display = 'none';
+      document.getElementById('practice-text').innerHTML = '';
+      document.getElementById('input-field').value = '';
+      document.getElementById('retry-message').hidden = true;
+      document.getElementById('welcome-message').style.display = 'block';
+      if (typeof resetGame === 'function') resetGame();
+    });
+  </script>
+
+  <!-- 既存 JS -->
+  <script src="js/keyboard-render.js"></script>
+  <script src="../js/windsurf-config.js"></script>
+  <script src="../js/mode3-win.js" defer></script>
+  <!-- FAQ Modal (hidden) -->
+  <dialog id="faqModal" style="padding:1rem;max-width:400px;">
+    <h3>よくある質問</h3>
+    <p>F7 が効かない場合は Fn-Lock を解除するか、IME のキー設定をご確認ください。</p>
+    <button onclick="this.parentElement.close()">閉じる</button>
+  </dialog>
+
+  <!-- Problem Engine -->
+  <script src="js/problem-engine.js" defer></script>
+</body>
+</html>

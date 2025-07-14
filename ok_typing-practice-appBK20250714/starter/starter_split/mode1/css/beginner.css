@@ -1,0 +1,172 @@
+@import url('style.css');
+
+/* 追加: モード選択ボタンとテンポ調整 UI */
+#mode-buttons {
+  /* --- 追加: ボタン群の幅を固定してモード切替でもサイズを不変に --- */
+  min-width: 260px;
+
+  position: fixed;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+}
+
+/* 運指別パルスアニメーション */
+@keyframes pulse-animation {
+  0% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.7); }
+  100% { box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+}
+
+/* 左小指 - 赤 */
+.pulse-left-pinky {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+  background-color: rgba(255, 0, 0, 0.4) !important;
+}
+
+/* 左薬指 - オレンジ */
+.pulse-left-ring {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7);
+  background-color: rgba(255, 165, 0, 0.4) !important;
+}
+
+/* 左中指 - 黄色 */
+.pulse-left-middle {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7);
+  background-color: rgba(255, 255, 0, 0.4) !important;
+}
+
+/* 左人差し指 - 緑 */
+.pulse-left-index {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7);
+  background-color: rgba(0, 255, 0, 0.4) !important;
+}
+
+/* 右人差し指 - シアン */
+.pulse-right-index {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7);
+  background-color: rgba(0, 255, 255, 0.4) !important;
+}
+
+/* 右中指 - 青 */
+.pulse-right-middle {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 0, 255, 0.7);
+  background-color: rgba(0, 0, 255, 0.4) !important;
+}
+
+/* 右薬指 - 紫 */
+.pulse-right-ring {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(128, 0, 128, 0.7);
+  background-color: rgba(128, 0, 128, 0.4) !important;
+}
+
+/* 右小指 - ピンク */
+.pulse-right-pinky {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7);
+  background-color: rgba(255, 0, 255, 0.4) !important;
+}
+
+/* 親指 - グレー */
+.pulse-thumb {
+  animation: pulse-animation 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(128, 128, 128, 0.7);
+  background-color: rgba(128, 128, 128, 0.4) !important;
+}
+
+/* ==== メトロノームビート点滅用クラス ==== */
+.beat-flash{
+  animation: beatFlash 0.15s ease-in-out;
+}
+@keyframes beatFlash{
+  0%{transform:scale(1); box-shadow:0 0 0 0 rgba(255,255,255,.8);} 
+  100%{transform:scale(1.15); box-shadow:0 0 8px 6px rgba(255,255,255,0);} 
+}
+  
+
+#mode-buttons button{
+  padding:6px 12px;
+  font-size:14px;
+  background:#4caf50;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  transition:background-color .2s, transform .2s, box-shadow .2s;
+}
+#mode-buttons button:hover{ background:#388e3c; }
+#mode-buttons button.active{
+  background:#1b5e20;
+  box-shadow:0 0 0 2px #fff inset, 0 0 6px rgba(0,0,0,.4);
+  transform:scale(1.04);
+}
+
+/* テンポスライダー (モード3のみ表示) */
+#tempo-control{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  margin-top:4px;
+}
+#tempo-control input[type="range"]{
+  width:120px;
+}
+#tempo-value{font-size:12px;}
+
+/* ---- End of existing styles ---- */
+#tempo-control{
+  display:flex !important;          /* JS の display:none を無効化 */
+  min-height:110px;                 /* メッセージ有無で高さが変わらないよう固定 */
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  order: 1;
+}
+#tempo-message[hidden]{
+  display:block !important;         /* 非表示でも高さを保持 */
+  visibility:hidden !important;     /* 内容だけ隠す */
+}
+
+/* カウントダウンオーバーレイ */
+#countdown-overlay{
+  display:none; /* default hidden */
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:6rem;
+  font-weight:bold;
+  color:#fff;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
+  user-select:none;
+}
+
+/* hidden attribute override */
+#countdown-overlay[hidden]{display:none !important;}
+
+/* =============================
+   Layout tweak: finger legend & control buttons above keyboard
+   ============================= */
+#keyboard-and-fingers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#finger-legend {
+  order: -1; /* shows before keyboard */
+  margin-bottom: 12px;
+}
+

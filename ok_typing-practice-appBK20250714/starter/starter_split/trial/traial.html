@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>日本語タイピング練習</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <h1>日本語タイピング練習</h1>
+
+  <!-- ウェルカムメッセージ -->
+  <div id="welcome-message">
+    <h2>トライアル版</h2>
+    <p><span class="start-btn-inline">Start</span> を押してください</p>
+  </div>
+
+  <!-- メインのタイピング表示エリアのコンテナ -->
+  <div id="main-display-wrapper" style="display: none;">
+    <!-- 中央のかな文字表示とオーバーレイ -->
+    <div id="main-kana-wrapper">
+      <div id="next-char-container">
+        <div id="next-char"></div>
+      </div>
+    </div>
+    
+    <!-- ローマ字表示 -->
+    <div id="next-roma-container">
+      <div id="roma-container">
+        <div id="next-roma"></div>
+      </div>
+    </div>
+    
+    <!-- メッセージはキーボードの上に移動しました -->
+  </div>
+
+  <!-- 拡大表示されるキーのコンテナ -->
+  <div id="enlarged-key-container">
+    <!-- ここに拡大されたキーのイメージがJSで動的に挿入されます -->
+  </div>
+
+  <p id="practice-text"></p>
+  <input id="input-field" autocomplete="off">
+
+  <!-- もう一度メッセージ -->
+  <div id="retry-message" hidden>もう一度！</div>
+
+  <!-- 仮想キーボードと運指レジェンドのコンテナ -->
+  <div id="keyboard-and-fingers">
+    <!-- 仮想キーボード -->
+    <div id="keyboard"></div>
+
+    <!-- 運指レジェンド -->
+    <div id="finger-legend">
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-pinky"><div class="finger-label">左小指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-ring"><div class="finger-label">左薬指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-middle"><div class="finger-label">左中指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-left-index"><div class="finger-label">左人差指</div></div>
+      </div>
+      <div class="finger-gap-large"></div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-thumb"><div class="finger-label">親指</div></div>
+      </div>
+      <div class="finger-gap-small"></div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-index"><div class="finger-label">右人差指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-middle"><div class="finger-label">右中指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-ring"><div class="finger-label">右薬指</div></div>
+      </div>
+      <div class="finger-wrapper">
+        <div class="finger-shape finger-right-pinky"><div class="finger-label">右小指</div></div>
+      </div>
+      <!-- 操作ボタンコンテナ -->
+      <div id="control-buttons">
+        <button id="start-btn">Start</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // スタートボタンが押されたらウェルカムメッセージを非表示に
+    document.getElementById('start-btn').addEventListener('click', function() {
+      document.getElementById('welcome-message').style.display = 'none';
+      document.getElementById('main-display-wrapper').style.display = 'block';
+    });
+    
+    // リセットボタンが押されたらウェルカムメッセージを再表示し、ゲームをリセット
+    document.getElementById('reset-btn').addEventListener('click', function() {
+      // メイン表示を非表示にする
+      document.getElementById('main-display-wrapper').style.display = 'none';
+      // 練習テキストをクリア
+      document.getElementById('practice-text').innerHTML = '';
+      // 入力フィールドをクリア
+      document.getElementById('input-field').value = '';
+      // 「もう一度！」メッセージを非表示
+      document.getElementById('retry-message').hidden = true;
+      // ウェルカムメッセージを表示
+      document.getElementById('welcome-message').style.display = 'block';
+      
+      // スタートボタンを有効化
+      document.getElementById('start-btn').disabled = false;
+      
+      // ページの初期状態に戻る - script.jsのリセット関数があれば呼び出す
+      if (typeof resetGame === 'function') {
+        resetGame();
+      }
+    });
+  </script>
+  
+  <style>
+    #welcome-message {
+      text-align: center;
+      margin: 20px auto;
+      font-family: sans-serif;
+      position: relative; /* absoluteからrelativeに変更 */
+      z-index: 10;
+    }
+    
+    #welcome-message h2 {
+      font-size: 24px;
+      margin-bottom: 40px;
+      font-weight: normal;
+    }
+    
+    #welcome-message p {
+      font-size: 16px;
+    }
+    
+    .start-btn-inline {
+      display: inline-block;
+      background-color: #337ab7;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #keyboard-and-fingers {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #finger-legend {
+      order: -1; /* place above keyboard */
+      margin-top: 0;
+      margin-bottom: 10px; /* spacing */
+    }
+   </style>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

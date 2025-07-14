@@ -1,0 +1,315 @@
+/*────────────────────────────────────
+  style.css 〈全文・o3のフィードバック適用版〉
+  ─ 日本語タイピング練習アプリ
+────────────────────────────────────*/
+
+/* 指ごとの基準色（ここは JS からも参照される） */
+:root{
+  --left-pinky:#ff0000;
+  --left-ring:#ffa500;
+  --left-middle:#ffd800;
+  --left-index:#00c000;
+  --right-index:#00d8d8;
+  --right-middle:#0040ff;
+  --right-ring:#8000ff;
+  --right-pinky:#ff80b2;
+  --thumb:#808080;
+
+  /* JS 側で上書きして “今点滅中の色” と同期させる */
+  --current-color:#2196f3;
+}
+
+/* ---------- 共通 ---------- */
+body{
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Helvetica Neue", Arial, Meiryo, sans-serif;
+  text-align:center;
+  background-color: #f0f0f0;
+  color: #333;
+  position: relative; /* start-btn の absolute 配置の基準 */
+  min-height: 100vh; /* 画面下部にボタンを配置するために必要 */
+  padding-bottom: 80px; /* start-btn が他のコンテンツに被らないように */
+}
+h1 {
+  color: #444;
+  margin-bottom: 40px; /* H1とメイン表示エリアの間隔 */
+}
+#practice-text{
+  font-size:28px;
+  margin:20px 0; /* マージンを調整 */
+  letter-spacing: 2px;
+  min-height: 40px; /* レイアウト崩れ防止 */
+}
+#practice-text span {
+  position: relative; /* バツマーク表示用 */
+}
+
+/* メインのタイピング表示エリアのラッパー */
+#main-display-wrapper {
+  display: flex; /* 中央に寄せたいのでFlexboxを維持 */
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px; /* 下のローマ字表示との間隔 */
+  min-height: 150px; /* かな文字が収まる最小高さ */
+}
+
+/* かな文字表示のコンテナ */
+#next-char-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.5em; /* かな文字の最大幅 */
+  height: 1.5em; /* かな文字の最大高さ */
+  border: none; /* 枠線を削除 */
+  border-bottom: none; /* 下ボーダーを削除 */
+  border-radius: 8px;
+  background-color: transparent; /* 背景色を透明に */
+  box-shadow: none; /* 影を削除 */
+  margin: 0; /* 左右の要素が無くなったのでマージンを0に */
+}
+
+/* かな文字自体のスタイル */
+#next-char {
+  font-size:144px; /* 大きなフォントサイズ */
+  font-weight: bold;
+  line-height: 1; /* 文字の行の高さを調整して中央に */
+  display: inline-block; /* text-alignを無効化 */
+  color: #333;
+}
+
+/* 【重要】フィードバック全体をキーボードの上に固定表示するスタイル */
+#feedback-overlay {
+  position: fixed; /* 画面に固定 */
+  bottom: 200px;       /* キーボードのちょうど上あたりに調整 (bodyのpadding-bottomも考慮) */
+  left: 50%;
+  transform: translateX(-50%); /* 中央寄せ */
+  width: auto;         /* 中身に合わせて */
+  padding: 8px 12px;   /* 適度な余白 */
+  background: rgba(255,255,255,0.9); /* 半透明の背景 */
+  border-radius: 6px;
+  pointer-events: none; /* クリック無効 */
+  opacity: 0;          /* 初期は非表示 */
+  transition: opacity 0.1s; /* 表示アニメーション */
+  display: flex;       /* 子要素を横並びにする */
+  align-items: center;
+  gap: 6px;            /* マークとメッセージの間隔 */
+  z-index: 1000;       /* 他の要素より手前に表示 */
+}
+
+/* 表示トグル */
+#feedback-overlay.show {
+  opacity: 1;
+}
+
+/* ×／〇マークのサイズ (o3の提案通り100pxに) */
+#feedback-overlay .overlay-mark {
+  font-size: 100px;  /* ← 元の大きさに */
+  font-weight: bold;
+  line-height: 1;
+  margin: 0; /* 親のFlexboxで間隔を制御するため */
+}
+#correct-mark { color: #5cb85c; } /* 緑色の〇 */
+#wrong-mark { color: #d9534f; } /* 赤色の× */
+
+/* 「もう一回！」メッセージを赤字に (o3の提案通り) */
+#feedback-overlay .overlay-message {
+  font-size: 1.2em; /* 親のフォントサイズ（現在の24px）の1.2倍 -> 28.8px */
+  font-weight: bold;
+  color: red; /* 赤字に */
+  margin: 0; /* 親のFlexboxで間隔を制御するため */
+}
+
+
+/* ローマ字表示のコンテナ */
+#next-roma{
+  font-size:24px;
+  margin-bottom:30px; /* キーボードとの間隔を確保 */
+  display: flex; /* span要素を横並びにするため */
+  justify-content: center;
+  align-items: center;
+  min-height: 40px; /* 最低の高さを確保 */
+}
+/* ローマ字の個別の文字表示スタイル */
+#next-roma span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.5em; /* 文字のキー幅 */
+  height: 1.5em; /* 文字のキー高さ */
+  margin: 0 2px; /* 文字間のスペース */
+  border: 1px solid #aaa;
+  border-bottom: 3px solid #999;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  color: #333;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.1s;
+}
+/* ローマ字の入力済み部分（緑背景） */
+#next-roma .correct-char {
+  background-color: #28a745; /* 緑色 */
+  color: #fff;
+  border-color: #28a745;
+  border-bottom-color: #228b22;
+}
+/* ローマ字の次に打つ部分（点滅） */
+#next-roma .next-char-part {
+  animation: flash .5s infinite alternate; /* 点滅 */
+  box-shadow: 0 0 6px 2px var(--current-color); /* 指の色で光る */
+}
+
+/* ローマ字各文字に指の色を適用するためのスタイル（JSからクラス付与） */
+/* CSSではdarken関数が使えないため、手動で暗い色を設定 */
+#next-roma span.finger-left-pinky { background-color: var(--left-pinky); color: #fff; border-color: var(--left-pinky); border-bottom-color: #cc0000; }
+#next-roma span.finger-left-ring { background-color: var(--left-ring); color: #fff; border-color: var(--left-ring); border-bottom-color: #cc8400; }
+#next-roma span.finger-left-middle { background-color: var(--left-middle); color: #333; border-color: var(--left-middle); border-bottom-color: #cca600; }
+#next-roma span.finger-left-index { background-color: var(--left-index); color: #fff; border-color: var(--left-index); border-bottom-color: #009900; }
+#next-roma span.finger-right-index { background-color: var(--right-index); color: #fff; border-color: var(--right-index); border-bottom-color: #00a9a9; }
+#next-roma span.finger-right-middle { background-color: var(--right-middle); color: #fff; border-color: var(--right-middle); border-bottom-color: #0033cc; }
+#next-roma span.finger-right-ring { background-color: var(--right-ring); color: #fff; border-color: var(--right-ring); border-bottom-color: #6600cc; }
+#next-roma span.finger-right-pinky { background-color: var(--right-pinky); color: #fff; border-color: var(--right-pinky); border-bottom-color: #cc6699; }
+#next-roma span.finger-thumb { background-color: var(--thumb); color: #fff; border-color: var(--thumb); border-bottom-color: #666666; }
+
+
+#input-field{opacity:0;height:0;position: absolute;}
+
+/* Startボタンの配置（キーボードのすぐ下に） */
+#start-btn{
+  padding:10px 24px;font-size:18px;background:#2196f3;color:#fff;
+  border:0;border-radius:6px;cursor:pointer;
+  margin-top: 30px; /* キーボードとの間隔 */
+  margin-bottom: 20px; /* 下の統計情報との間隔 */
+  display: block; /* 中央配置のためにブロック要素にする */
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 100; /* 他の要素より手前に表示 */
+  transition: background-color 0.2s, transform 0.1s;
+}
+#start-btn:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+#start-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+#start-btn:disabled{opacity:.5;cursor:default}
+
+#stats{margin:30px 0; color: #555;} /* 上下のマージンを確保 */
+#stats span { font-weight: bold; color: #333; margin: 0 8px;}
+
+/* ---------- 仮想キーボード（JIS配列対応） ---------- */
+#keyboard{
+  margin: 30px auto; /* 上下のマージンを確保 */
+  display: grid;
+  grid-template-columns: repeat(32, 20px);
+  grid-auto-rows: 40px;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px;
+  background-color: #dcdcdc;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+/* 実キー */
+.key{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #aaa;
+  border-bottom: 3px solid #999;
+  border-radius:4px;
+  user-select:none;
+  background-color: #f5f5f5; /* デフォルトは薄いグレー */
+  font-size: 14px;
+  font-weight: 500;
+  /* 標準キーは2カラム分を占有 */
+  grid-column: span 2;
+  transition: all 0.05s;
+}
+
+/* 各行の最初のキーに適用し、必ず1列目から始める */
+.key-row-start {
+  grid-column-start: 1;
+}
+
+/* 点滅ハイライト（次に打つキー） */
+.next-key{
+  animation:flash .5s infinite alternate;
+  border-color:var(--current-color);
+  box-shadow:0 0 8px 2px var(--current-color);
+  transform: translateY(-2px);
+}
+
+/* 押されたキーのフィードバック */
+.key.pressed { /* 押されたキーに一時的に適用 */
+  color: #fff; /* 文字色を白に */
+  transform: translateY(1px); /* 少し沈む */
+  border-bottom-width: 1px; /* 沈んだ分ボーダーを薄く */
+}
+/* 正しい入力のキー */
+.key.correct-press {
+  border-color:#5cb85c;
+  box-shadow: 0 0 5px 2px rgba(92, 184, 92, 0.7);
+}
+/* 間違った入力のキー */
+.key.wrong-press {
+  border-color:#d9534f;
+  box-shadow: 0 0 5px 2px rgba(217, 83, 79, 0.7);
+}
+
+
+/* ---------- 指レジェンド ---------- */
+#finger-legend span{
+  display:inline-block;
+  margin:2px 4px;
+  padding:4px 8px;
+  border-radius:4px;
+  color:#fff;
+  font-size:.8rem;
+  transition: transform 0.2s;
+}
+
+.finger-left-pinky {background:var(--left-pinky)}
+.finger-left-ring  {background:var(--left-ring)}
+.finger-left-middle{background:var(--left-middle)}
+.finger-left-index {background:var(--left-index)}
+.finger-right-index{background:var(--right-index)}
+.finger-right-middle {background:var(--right-middle)}
+.finger-right-ring {background:var(--right-ring)}
+.finger-right-pinky{background:var(--right-pinky)}
+.finger-thumb      {background:var(--thumb)}
+
+/* 点滅ハイライト（指側） */
+.next-finger{
+  animation:flash .5s infinite alternate;
+  background:var(--current-color)!important;
+  transform: scale(1.1);
+  box-shadow: 0 0 6px 2px var(--current-color);
+}
+
+/* ---------- 共通アニメーション ---------- */
+@keyframes flash{
+  from{opacity:.7}to{opacity:1}
+}
+
+/* ミスしたかな文字に表示する×マーク */
+.wrong-kana::after {
+  content: "×";
+  color: #d9534f; /* 赤色 */
+  font-size: 0.8em;
+  font-weight: bold;
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  line-height: 1;
+}
+/* 練習テキストの現在文字がミス時に揺れるアニメーション */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+.shake-on-error {
+  animation: shake 0.5s;
+}
