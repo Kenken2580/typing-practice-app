@@ -8,6 +8,15 @@
 
   /* ---------- JIS キーボードレイアウト ---------- */
   const jisLayout = [
+    // 0行目 - ファンクションキー
+    [
+      { text: 'Esc', code: 'Escape', span: 2, key: 'escape' },
+      { text: '', code: '', span: 1, key: '', transparent: true },
+      { text: 'F1', code: 'F1', span: 2, key: 'f1' }, { text: 'F2', code: 'F2', span: 2, key: 'f2' }, { text: 'F3', code: 'F3', span: 2, key: 'f3' }, { text: 'F4', code: 'F4', span: 2, key: 'f4' },
+      { text: 'F5', code: 'F5', span: 2, key: 'f5' }, { text: 'F6', code: 'F6', span: 2, key: 'f6' }, { text: 'F7', code: 'F7', span: 2, key: 'f7' }, { text: 'F8', code: 'F8', span: 2, key: 'f8' },
+      { text: 'F9', code: 'F9', span: 2, key: 'f9' }, { text: 'F10', code: 'F10', span: 2, key: 'f10' }, { text: 'F11', code: 'F11', span: 2, key: 'f11' }, { text: 'F12', code: 'F12', span: 2, key: 'f12' },
+      { text: '', code: '', span: 1, key: '', transparent: true }, { text: '', code: '', span: 2, key: '', transparent: true }
+    ],
     // 1行目
     [
       { text: '半/全', code: 'IntlYen', span: 2, key: '¥' }, { text: '1', code: 'Digit1', span: 2, key: '1' }, { text: '2', code: 'Digit2', span: 2, key: '2' }, { text: '3', code: 'Digit3', span: 2, key: '3' }, { text: '4', code: 'Digit4', span: 2, key: '4' }, { text: '5', code: 'Digit5', span: 2, key: '5' },
@@ -63,6 +72,10 @@
       d.textContent = keyData.text;
       if (keyData.span) d.style.gridColumn = `span ${keyData.span}`;
       if (keyData.rowSpan) d.style.gridRow = `span ${keyData.rowSpan}`;
+      if (keyData.transparent) {
+        d.style.visibility = 'hidden';
+        d.style.pointerEvents = 'none';
+      }
       kb.appendChild(d);
     });
   });
