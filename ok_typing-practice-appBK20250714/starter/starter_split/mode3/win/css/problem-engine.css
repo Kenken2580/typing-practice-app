@@ -1,0 +1,354 @@
+/* problem-engine.css - Mode3独立の学習システム専用スタイル */
+
+/* --------------------------------------------------
+   1. 問題表示エリア
+   --------------------------------------------------*/
+.problem-instruction {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* --------------------------------------------------
+   2. キーシーケンス表示
+   --------------------------------------------------*/
+.key-sequence {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.key-sequence .key-item {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  margin: 0.2rem;
+  background-color: #f8f9fa;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  min-width: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+/* 特別なキー（半/全、ファンクションキーなど）の強調表示 */
+.key-display.special-key {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+  font-weight: bold;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 6px;
+  position: relative;
+}
+
+/* 特別なキーの囲み枠効果 */
+.key-display.special-key::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 2px dashed #ffc107;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* キーアイコン画像のスタイル */
+.key-icon {
+  max-width: 100%;
+  max-height: 2rem;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.key-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.key-display.current {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+  transform: scale(1.1);
+  animation: pulse 1s infinite;
+}
+
+.key-display.completed {
+  background-color: #28a745;
+  color: white;
+  border-color: #1e7e34;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+}
+
+/* --------------------------------------------------
+   3. フィードバックオーバーレイ（○×表示）
+   --------------------------------------------------*/
+.feedback-overlay {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  z-index: 10;
+  animation: feedbackPop 0.5s ease-out;
+}
+
+.feedback-overlay.correct {
+  background-color: #28a745;
+  color: white;
+}
+
+.feedback-overlay.incorrect {
+  background-color: #dc3545;
+  color: white;
+}
+
+@keyframes feedbackPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------
+   4. 黒帯（入力履歴表示）のスタイル強化
+   --------------------------------------------------*/
+#typed-display {
+  background-color: #1a1a1a;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  padding: 1rem;
+  border-radius: 4px;
+  min-height: 3rem;
+  margin: 1rem 0;
+  border: 2px solid #333;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+#typed-display .correct-input {
+  color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.1);
+  padding: 0.2rem 0.4rem;
+  margin: 0 0.1rem;
+  border-radius: 3px;
+}
+
+#typed-display .incorrect-input {
+  color: #ff4444;
+  background-color: rgba(255, 68, 68, 0.1);
+  padding: 0.2rem 0.4rem;
+  margin: 0 0.1rem;
+  border-radius: 3px;
+  text-decoration: line-through;
+}
+
+/* 黒帯での特別なキー表示 */
+#typed-display .special-key-typed {
+  background-color: #fff3cd !important;
+  border-color: #ffc107 !important;
+  color: #856404 !important;
+  font-weight: bold;
+  border-width: 2px;
+  box-shadow: 0 1px 3px rgba(255, 193, 7, 0.3);
+  padding: 0.2rem 0.4rem;
+  margin: 0 0.1rem;
+  border-radius: 3px;
+  border-style: solid;
+  position: relative;
+}
+
+/* 黒帯の特別なキーの囲み枠効果 */
+#typed-display .special-key-typed::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 1px dashed #ffc107;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------
+   5. 完了メッセージ
+   --------------------------------------------------*/
+.completion-message {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.completion-message h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.completion-message p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.completion-message button {
+  background-color: #ffffff;
+  color: #667eea;
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.completion-message button:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------
+   6. リトライメッセージの強化
+   --------------------------------------------------*/
+#retry-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #dc3545;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  z-index: 1000;
+  animation: shakeAndFade 2s ease-out;
+}
+
+@keyframes shakeAndFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  20% {
+    transform: translate(-50%, -50%) translateX(-10px) scale(1);
+  }
+  30% {
+    transform: translate(-50%, -50%) translateX(10px) scale(1);
+  }
+  40% {
+    transform: translate(-50%, -50%) translateX(-5px) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateX(5px) scale(1);
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* --------------------------------------------------
+   7. キーボードハイライトの強化
+   --------------------------------------------------*/
+.key.next-key {
+  /* 色は JavaScript で動的に設定されるため、ここでは基本的なアニメーションのみ */
+  animation: pulse-highlight 1s infinite;
+  transition: all 0.3s ease;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* --------------------------------------------------
+   8. レスポンシブ対応
+   --------------------------------------------------*/
+@media (max-width: 768px) {
+  .problem-instruction {
+    font-size: 1.2rem;
+    padding: 0.8rem;
+  }
+  
+  .key-display {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+  
+  .key-sequence {
+    gap: 0.3rem;
+    padding: 0.8rem;
+  }
+  
+  #typed-display {
+    font-size: 1rem;
+    padding: 0.8rem;
+  }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>画像テスト</title>
+    <style>
+        .test-key {
+            display: inline-block;
+            padding: 10px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 6px;
+            margin: 10px;
+        }
+        .key-icon {
+            max-height: 2rem;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>キーアイコンテスト</h2>
+    
+    <h3>相対パステスト</h3>
+    <div class="test-key">
+        <img src="images/hanzen.png" alt="半/全" class="key-icon" onerror="this.style.border='2px solid red'" onload="this.style.border='2px solid green'" />
+        <span>相対パス: images/hanzen.png</span>
+    </div>
+    
+    <h3>絶対パステスト</h3>
+    <div class="test-key">
+        <img src="file:///D:/github/typing-practice-app/ok_typing-practice-appBK20250714/starter/starter_split/mode3/win/images/hanzen.png" alt="半/全" class="key-icon" onerror="this.style.border='2px solid red'" onload="this.style.border='2px solid green'" />
+        <span>絶対パス</span>
+    </div>
+    
+    <h3>ファイル情報</h3>
+    <p id="file-info">ファイル情報を確認中...</p>
+    
+    <script>
+        // ファイルの存在確認
+        fetch('images/hanzen.png')
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('file-info').innerHTML = '✅ images/hanzen.png が存在します。ファイルサイズ: ' + response.headers.get('content-length') + ' bytes';
+                } else {
+                    document.getElementById('file-info').innerHTML = '❌ images/hanzen.png が見つかりません。';
+                }
+            })
+            .catch(error => {
+                document.getElementById('file-info').innerHTML = '❌ エラー: ' + error.message;
+            });
+    </script>
+</body>
+</html>

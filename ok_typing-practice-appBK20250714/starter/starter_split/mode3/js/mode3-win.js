@@ -373,5 +373,21 @@
   // レッスンセレクターを作成
   createLessonSelector();
 
-  document.addEventListener('keydown', handleKey);
+  document.addEventListener('keydown', function(event) {
+    // Check if the event has already been handled by lesson1.html
+    const isHandled = event.lesson1Handled || false;
+    
+    // Listen for our custom event to mark this event as handled
+    event.target.addEventListener('lesson1-keydown-handled', function() {
+      event.lesson1Handled = true;
+    }, { once: true });
+    
+    // Wait a tiny bit to see if our custom event fires
+    setTimeout(function() {
+      if (!event.lesson1Handled) {
+        // Only handle the key if it wasn't already handled by lesson1.html
+        handleKey(event);
+      }
+    }, 0);
+  });
 })();

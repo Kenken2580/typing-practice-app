@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../css/typed-display.css">
   <link rel="stylesheet" href="../../mode1/css/beginner.css">
   <!-- mode3独自のスタイルで上書き -->
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <!-- 新しい学習システム専用CSS -->
   <link rel="stylesheet" href="css/problem-engine.css">
 
@@ -18,6 +18,33 @@
   <style>
     /* body の余白を消す（上に 8px 空くのを防ぐ） */
     body { margin: 0; }
+    
+    /* エラーアニメーション（震えアニメーション） */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    /* キーボードキーのハイライトスタイル */
+    .key-highlight, .next-key {
+      border: 2px solid #fff !important;
+      box-shadow: 0 0 10px rgba(0, 123, 255, 0.7) !important;
+      transform: translateY(-3px) !important;
+      z-index: 10 !important;
+    }
+    
+    /* 運指レジェンドのハイライトスタイル */
+    .finger-highlight, .next-finger {
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.8) !important;
+      outline: 3px solid #fff !important;
+    }
+
+    /* 親指を上に移動（最優先） */
+    .finger-thumb {
+      position: relative !important;
+      top: -20px !important;
+    }
 
     /* キーボード＋運指＋帯の縦並びを“通常順”に戻す */
     #keyboard-and-fingers {
@@ -27,81 +54,241 @@
     }
 
     /* 並び順（order）の指定は任意。無くても DOM 順どおりに並ぶ */
-    #typed-display { order: 0; }
-    #finger-legend { order: 1; margin-top: 12px; } /* 少しだけ隙間 */
-    #keyboard      { 
-      order: 2; 
-      grid-template-columns: repeat(30, 20px) !important;
-      width: 774px !important; /* 30列 × 20px + 29個のgap × 6px + padding 20px = 774px */
-    }
+    #finger-legend {
+  order: 1; /* あなたが指定している order */
+  margin-top: 4px; /* あなたが指定している margin-top */
+  margin-bottom: 0; /* あなたが指定している margin-bottom */
+
+  /* ↓↓↓ ここからが DevTools に表示されていた既存のスタイルです ↓↓↓ */
+  display: flex;
+  justify-content: center; /* もし左寄せにしたいなら flex-start に変更 */
+  align-items: flex-end;
+  gap: 8px;
+  margin: -5px 0 0; /* このマージンも、margin-top, margin-bottom と競合するので調整が必要 */
+  padding: 0;
+  width: 100%;
+  position: relative;
+  /* ↑↑↑ ここまでが既存のスタイルです ↑↑↑ */
+
+  /* ↓↓↓ ここに追加したい margin-left を記述 ↓↓↓ */
+  margin-left: -130px; /* 例: 左に50px移動 */
+}
+
+#keyboard {
+  order: 2;
+  grid-template-columns: repeat(30, 20px) !important;
+  width: 774px !important; /* 30列 × 20px + 29個のgap × 6px + padding 20px = 774px */
+}
+
+/* キーストロークナビゲーション用アニメーション */
+@keyframes pulse {
+  0% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Mode 3 – 半角/かな/カナ 切替 (Windows)</h1>
+  <!-- B案: ヘッダー 
+  <header style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+    <h1 style="margin: 0; font-size: 1.5rem; color: #333;">Mode 3 – 半角/かな/カナ 切替 (Windows)</h1>
+        <option value="4">④ メールアドレス</option>
+        <option value="5">⑤ 漢数字</option>
+        <option value="6">⑥ 郵便番号</option>
+        <option value="7">⑦ カタカナ</option>
+        <option value="8">⑧ 半角Ch...Shift-1</option>
+        <option value="9">⑨ 半角か？、</option>
+        <option value="10">⑩ 漢字</option>
+      </select>
+    </div>
+  </header>-->
 
-    <!-- レッスン表示 -->
-    <div id="lesson-display"></div>
-
-    <!-- 非表示入力フィールド -->
-    <input type="text" id="input-field" style="opacity:0;position:absolute;" autofocus>
-
-    <div id="practice-text" class="practice-text"></div>
-    <div id="retry-message" hidden>もう一度！</div>
+  <!-- 大きな入力ナビゲーション 4つ（動的変更対応） -->
+  <div id="input-navigation" style="display: flex; justify-content: center; gap: 2rem; padding: 2rem 0; margin-bottom: 2rem; min-height: 120px;">
     
-    <!-- 学習進捗表示 -->
-    <div id="progress-display" style="text-align: center; margin: 1rem 0;">
-      <div id="curriculum-title" style="font-size: 1.2rem; font-weight: bold; color: #666;"></div>
-      <div id="progress-bar" style="width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; margin: 0.5rem 0; overflow: hidden;">
-        <div id="progress-fill" style="height: 100%; background: linear-gradient(90deg, #007bff, #28a745); width: 0%; transition: width 0.3s ease;"></div>
-      </div>
+    <!-- ナビゲーションアイテム 1 -->
+    <div id="nav-item-1" class="input-nav-item" data-finger="left-index" style="border-radius: 20px; padding: 2rem 3rem; text-align: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="nav-main-text" style="font-size: 3rem; font-weight: bold; color: #fff; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">あ</div>
+      <div class="nav-sub-text" style="font-size: 1.2rem; color: #fff; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">ひらがな</div>
+    </div>
+    
+    <!-- ナビゲーションアイテム 2 -->
+    <div id="nav-item-2" class="input-nav-item" data-finger="right-index" style="border-radius: 20px; padding: 2rem 3rem; text-align: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="nav-main-text" style="font-size: 3rem; font-weight: bold; color: #fff; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">ア</div>
+      <div class="nav-sub-text" style="font-size: 1.2rem; color: #fff; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">カタカナ</div>
+    </div>
+    
+    <!-- ナビゲーションアイテム 3 -->
+    <div id="nav-item-3" class="input-nav-item" data-finger="right-middle" style="border-radius: 20px; padding: 2rem 3rem; text-align: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="nav-main-text" style="font-size: 3rem; font-weight: bold; color: #fff; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">A1</div>
+      <div class="nav-sub-text" style="font-size: 1.2rem; color: #fff; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">英数字</div>
+    </div>
+    
+    <!-- ナビゲーションアイテム 4 -->
+    <div id="nav-item-4" class="input-nav-item" data-finger="right-ring" style="border-radius: 20px; padding: 2rem 3rem; text-align: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="nav-main-text" style="font-size: 3rem; font-weight: bold; color: #fff; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">＠！</div>
+      <div class="nav-sub-text" style="font-size: 1.2rem; color: #fff; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">記号</div>
+    </div>
+    
+  </div>
+  
+  <!-- テスト用切替ボタン -->
+
+  <!-- B案: お題表示エリア -->
+  <div id="problem-display" style="text-align: center; margin: -2rem 0; min-height: 100px;">
+    <div id="current-problem" style="font-size: 2rem; font-weight: bold; color: #333; background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 2px solid #dee2e6; margin: 0 2rem; min-height: 60px; display: flex; align-items: center; justify-content: center;">スタートボタンを押してください</div>
+  </div>
+
+  <!-- B案: ユーザー入力表示エリア (黒帯) -->
+  <div id="user-input-display" style="background: #333; color: #00ff00; font-family: 'Courier New', monospace; font-size: 2.5rem; padding: 1.5rem 2rem; margin: 0 2rem 2rem; border-radius: 4px; min-height: 70px; text-align: center; overflow-x: auto; display: flex; align-items: center; justify-content: center;">
+    <span id="typed-chars" style="letter-spacing: 0.3em; font-weight: bold;"></span><span id="current-input" style="background: #555; padding: 0 4px; margin-left: 0.2em; display: none;">_</span>
+  </div>
+  
+  <!-- エラーオーバーレイ -->
+  <div id="error-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; z-index: 1000; justify-content: center; align-items: center;">
+    <div id="error-message" style="background: white; padding: 3rem; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); max-width: 400px; width: 90%;">
+      <h2 style="color: #dc3545; font-size: 2.5rem; margin-bottom: 1rem;">もう一回！</h2>
+      <p style="font-size: 1.2rem; color: #666; margin-bottom: 2rem;">正しいキーを押してください</p>
+      <button onclick="closeErrorOverlay()" style="background: #007bff; color: white; border: none; padding: 0.8rem 2rem; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">継続</button>
     </div>
   </div>
+
+  <!-- B案: メインコンテンツエリア -->
+  <div id="main-content">
+    
+    <!-- カリキュラムブロック (キーボード左側) -->
+    <div id="curriculum-block" style="margin-top: 95px;">
+      <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.1rem;">学習進捗</h3>
+      
+      <!-- レッスン選択 -->
+      <div style="margin-bottom:1rem;">
+        <label for="lesson-select" style="display:block;font-weight:bold;margin-bottom:4px;">レッスンを選択してください</label>
+        <select id="lesson-select" style="padding:0.5rem; width:100%; border:1px solid #ccc; border-radius:4px; font-size:1rem;">
+          <option value="">― レッスンを選択してください ―</option>
+          <option value="1">① 今日の日付</option>
+          <option value="2">② 年月日</option>
+          <option value="3">③ 半/全/「」</option>
+          <option value="4">④ メールアドレス</option>
+          <option value="5">⑤ 漢数字</option>
+          <option value="6">⑥ 郵便番号</option>
+          <option value="7">⑦ カタカナ</option>
+          <option value="8">⑧ 半角Ch...Shift-1</option>
+          <option value="9">⑨ 半角か？、</option>
+          <option value="10">⑩ 漢字</option>
+        </select>
+      </div>
+      <!-- 進捗表示 -->
+      <div id="progress-display" style="margin: 1rem 0;">
+        <div id="curriculum-title" style="font-size: 1rem; font-weight: bold; color: #666; margin-bottom: 0.5rem;">レッスンを選択してください</div>
+        <div id="progress-bar" style="width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
+          <div id="progress-fill" style="height: 100%; background: linear-gradient(90deg, #007bff, #28a745); width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+      
+      <!-- お題情報 -->
+      <div id="problem-info" style="background: #e7f3ff; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+        <div id="lesson-title" style="font-weight: bold; color: #0066cc; margin-bottom: 0.5rem;">レッスン情報</div>
+        <div id="lesson-description" style="font-size: 0.9rem; color: #666;"></div>
+      </div>
+      
+      <!-- 設定セクション -->
+      <div id="settings-section" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; border: 1px solid #dee2e6;">
+        <div style="font-weight: bold; color: #666; margin-bottom: 0.5rem; font-size: 0.9rem;">設定</div>
+        <div style="margin-bottom: 0.5rem; display:flex; gap:12px; align-items:center; font-size:0.8rem; color:#666;">
+          <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="radio" name="info-setting" id="info-show" value="show" checked style="margin-right:0.5rem;">
+            インフォメーション表示
+          </label>
+          <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="radio" name="info-setting" id="info-hide" value="hide" style="margin-right:0.5rem;">
+            非表示
+          </label>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- 既存のタイピングUI (絶対に保護) -->
+    <div style="flex: 0 0 1000px;">
+      <!-- タイピング練習UI - 安定構造ラッパー -->
+      <div id="typing-ui" style="width: 800px;">
+        
+        <!-- 運指アイコン群 -->
+        <div id="finger-legend">
+          <div class="finger-wrapper"><div class="finger-shape finger-left-pinky"><div class="finger-label">左小指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-left-ring"><div class="finger-label">左薬指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-left-middle"><div class="finger-label">左中指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-left-index"><div class="finger-label">左人差指</div></div></div>
+          <div class="finger-gap-large"></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-thumb"><div class="finger-label">親指</div></div></div>
+          <div class="finger-gap-small"></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-right-index"><div class="finger-label">右人差指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-right-middle"><div class="finger-label">右中指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-right-ring"><div class="finger-label">右薬指</div></div></div>
+          <div class="finger-wrapper"><div class="finger-shape finger-right-pinky"><div class="finger-label">右小指</div></div></div>
+        </div>
+
+        <!-- キーボードと操作ボタンを横並び配置 -->
+        <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; margin-top: -25px; order: 2;">
+          <!-- キーボード本体 -->
+          <div id="keyboard" style="flex-shrink: 0; order: 0;"></div>
+          <!-- 操作ボタン群（キーボード右側） -->
+          <div id="control-buttons">
+            <button id="start-btn" style="padding: 0.5rem 1rem; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; width: 100%;">Start</button>
+            <button id="reset-btn" style="padding: 0.5rem 1rem; background: #6c757d; color: #fff; border: none; border-radius: 4px; font-size: 1rem; width: 100%;">Reset</button>
+            <button id="skip-btn" style="padding: 0.5rem 1rem; background: #ffc107; color: #212529; border: none; border-radius: 4px; font-size: 1rem; width: 100%;">Skip</button>
+            <a href="practice.html" style="padding: 0.5rem 1rem; text-decoration: none; color: #007bff; text-align: center; border: 1px solid #007bff; border-radius: 4px; font-size: 0.8rem; width: 100%; display: block; box-sizing: border-box;">実践練習</a>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 非表示入力フィールド -->
+  <input type="text" id="input-field" style="opacity:0;position:absolute;" autofocus>
+  
+  <!-- 既存の要素 (後方互換性のため保持) -->
+  <div id="practice-text" class="practice-text" style="display: none;"></div>
+  <div id="retry-message" hidden>もう一度！</div>
+  <div id="lesson-display" style="display: none;"></div>
 
   <!-- カウントダウン -->
   <div id="countdown-overlay" hidden>3</div>
 
-  <!-- 仮想キーボードと運指レジェンド -->
-  <div id="keyboard-and-fingers">
+  <!-- 既存のコンテナ構造を保持 (keyboard-render.jsとの互換性のため) -->
+  <div id="keyboard-and-fingers" style="display: none;">
     <div id="mode-buttons" style="display:none"></div>
-
-    <!-- ★ 黒帯（先頭に書かれている） -->
-    <div id="typed-display"></div>
-
-    <!-- 運指アイコン群 -->
-    <div id="finger-legend">
-      <div class="finger-wrapper"><div class="finger-shape finger-left-pinky"><div class="finger-label">左小指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-left-ring"><div class="finger-label">左薬指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-left-middle"><div class="finger-label">左中指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-left-index"><div class="finger-label">左人差指</div></div></div>
-      <div class="finger-gap-large"></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-thumb"><div class="finger-label">親指</div></div></div>
-      <div class="finger-gap-small"></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-right-index"><div class="finger-label">右人差指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-right-middle"><div class="finger-label">右中指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-right-ring"><div class="finger-label">右薬指</div></div></div>
-      <div class="finger-wrapper"><div class="finger-shape finger-right-pinky"><div class="finger-label">右小指</div></div></div>
-
-      <!-- 操作ボタン -->
-      <div id="control-buttons">
-        <button id="start-btn">Start</button>
-        <button id="reset-btn">Reset</button>
-        <button id="skip-btn" style="margin-left: 0.5rem; background-color: #ffc107; color: #212529;">Skip</button>
-        <a href="practice.html" style="margin-left:1rem;">実践練習へ →</a>
-      </div>
-    </div>
-
-    <!-- キーボード本体 -->
-    <div id="keyboard"></div>
+    <!-- 旧構造は非表示で保持 -->
   </div>
 
   <!-- スクリプト -->
   <script>
-    // Start ボタン - 新しい学習システムを開始
+    // Start ボタン - 選択されたレッスンを開始
     document.getElementById('start-btn').addEventListener('click', () => {
-      if (window.mode3ProblemEngine) {
-        window.mode3ProblemEngine.start();
-        updateProgressDisplay();
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect && lessonSelect.value && lessonSelect.value !== '') {
+        // 選択されたレッスンを開始
+        onLessonSelect(lessonSelect.value);
+      } else {
+        // レッスンが選択されていない場合のメッセージ
+        const currentProblem = document.getElementById('current-problem');
+        if (currentProblem) {
+          currentProblem.textContent = 'レッスンを選択してください';
+        }
       }
     });
 
@@ -133,18 +320,1232 @@
 
     // グローバルに公開（problem-engine.jsから呼び出し可能にする）
     window.updateProgressDisplay = updateProgressDisplay;
+
+    // B案: レッスン選択機能
+    const lessonData = {
+      1: { title: "① 今日の日付", description: "今日の日付を入力する練習です", problem: "今日は2024年7月15日です" },
+      2: { title: "② 年月日", description: "年月日の入力練習です", problem: "2024/07/15 (Mon)" },
+      3: { title: "③ 半/全/「」", description: "半角全角切替と括弧の練習です", problem: "半角「英数」全角『日本語』" },
+      4: { title: "④ メールアドレス", description: "メールアドレス入力練習です", problem: "user@example.com" },
+      5: { title: "⑤ 漢数字", description: "漢数字の入力練習です", problem: "一二三四五六七八九十" },
+      6: { title: "⑥ 郵便番号", description: "郵便番号の入力練習です", problem: "〒123-4567" },
+      7: { title: "⑦ カタカナ", description: "カタカナ入力練習です", problem: "コンピュータ・プログラム" },
+      8: { title: "⑧ 半角Ch...Shift-1", description: "半角文字とShift+数字の練習です", problem: "Channel !@#$%^&*()" },
+      9: { title: "⑨ 半角か？、", description: "半角記号の入力練習です", problem: "半角か？、。・" },
+      10: { title: "⑩ 漢字", description: "漢字変換の練習です", problem: "日本語入力変換練習" }
+    };
+
+    // レッスン選択イベント
+    document.getElementById('lesson-selector').addEventListener('change', function(e) {
+      const lessonId = e.target.value;
+      const lesson = lessonData[lessonId];
+      
+      if (lesson) {
+        // お題表示を更新
+        document.getElementById('current-problem').textContent = lesson.problem;
+        
+        // カリキュラムブロック情報を更新
+        document.getElementById('curriculum-title').textContent = lesson.title;
+        document.getElementById('lesson-title').textContent = lesson.title;
+        document.getElementById('lesson-description').textContent = lesson.description;
+        
+        // 入力表示をリセット
+        document.getElementById('typed-chars').textContent = '';
+        document.getElementById('current-input').textContent = '';
+        
+        // 進捗をリセット
+        document.getElementById('progress-fill').style.width = '0%';
+      }
+    });
+
+    // ユーザー入力表示機能は新しいスクリプトセクションに統合済み
+
+    // 画像挿入のヘルパー関数（将来の拡張用）
+    function insertImageInInput(imagePath, altText) {
+      const typedChars = document.getElementById('typed-chars');
+      const img = document.createElement('img');
+      img.src = imagePath;
+      img.alt = altText;
+      img.style.height = '1em';
+      img.style.verticalAlign = 'middle';
+      img.style.margin = '0 2px';
+      typedChars.appendChild(img);
+    }
+
+    // グローバルに公開（他のスクリプトから使用可能）
+    window.insertImageInInput = insertImageInInput;
+    window.updateInputDisplay = updateInputDisplay;
+  </script>
+
+  <script>
+    // グローバル変数
+    let currentDisplayGroup = 0;
+    let currentKeystrokesData = [];
+    let currentKeystrokeIndex = 0;
+    let currentProblemText = '';
+    let currentProblemChars = [];
+    let displayedChars = [];
+    
+    // 各レッスンの問題内容
+    const lessons = {
+      1: "しんぶんし", 2: "あいうえお", 3: "きんようび", 4: "すいようび", 5: "おはよう",
+      6: "ありがとう", 7: "こんにちは", 8: "さようなら", 9: "うれしい", 10: "たのしい"
+    };
+
+    // 指の色マッピング
+    const fingerColors = {
+      'left-pinky': { bg: '#ff0000', rgba: '255,0,0' },
+      'left-ring': { bg: '#ffa500', rgba: '255,165,0' },
+      'left-middle': { bg: '#ffd800', rgba: '255,216,0' },
+      'left-index': { bg: '#00c000', rgba: '0,192,0' },
+      'right-index': { bg: '#00d8d8', rgba: '0,216,216' },
+      'right-middle': { bg: '#0040ff', rgba: '0,64,255' },
+      'right-ring': { bg: '#8000ff', rgba: '128,0,255' },
+      'right-pinky': { bg: '#ff80b2', rgba: '255,128,178' },
+      'thumb': { bg: '#808080', rgba: '128,128,128' }
+    };
+
+    // ナビゲーションアイテムのスタイルを指の色に設定
+    function initializeNavStyles() {
+      document.querySelectorAll('.input-nav-item').forEach(item => {
+        const finger = item.getAttribute('data-finger');
+        const colors = fingerColors[finger];
+        if (colors) {
+          const baseColor = colors.bg;
+          const lighterColor = lightenColor(baseColor, 40);
+          
+          item.style.background = `linear-gradient(135deg, ${baseColor} 0%, ${lighterColor} 100%)`;
+          item.style.border = `3px solid ${baseColor}`;
+          item.style.boxShadow = `0 4px 15px rgba(${colors.rgba},0.3)`;
+          
+          // ホバー効果のデータ属性を設定
+          item.setAttribute('data-base-shadow', `0 4px 15px rgba(${colors.rgba},0.3)`);
+          item.setAttribute('data-hover-shadow', `0 8px 25px rgba(${colors.rgba},0.4)`);
+          item.addEventListener('mouseenter', function() {
+            this.style.boxShadow = this.getAttribute('data-hover-shadow');
+          });
+          item.addEventListener('mouseleave', function() {
+            this.style.boxShadow = this.getAttribute('data-base-shadow');
+          });
+        }
+      });
+    }
+
+    // 色を明るくする関数
+    function lightenColor(color, percent) {
+      const num = parseInt(color.replace("#", ""), 16),
+      amt = Math.round(2.55 * percent),
+      R = (num >> 16) + amt,
+      G = (num >> 8 & 0x00FF) + amt,
+      B = (num & 0x0000FF) + amt;
+      return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+    // ひらがなからローマ字変換テーブル
+    const hiraganaToRomaji = {
+      'あ': 'A', 'い': 'I', 'う': 'U', 'え': 'E', 'お': 'O',
+      'か': 'KA', 'き': 'KI', 'く': 'KU', 'け': 'KE', 'こ': 'KO',
+      'が': 'GA', 'ぎ': 'GI', 'ぐ': 'GU', 'げ': 'GE', 'ご': 'GO',
+      'さ': 'SA', 'し': 'SHI', 'す': 'SU', 'せ': 'SE', 'そ': 'SO',
+      'ざ': 'ZA', 'じ': 'ZI', 'ず': 'ZU', 'ぜ': 'ZE', 'ぞ': 'ZO',
+      'た': 'TA', 'ち': 'CHI', 'つ': 'TSU', 'て': 'TE', 'と': 'TO',
+      'だ': 'DA', 'ぢ': 'DI', 'づ': 'DU', 'で': 'DE', 'ど': 'DO',
+      'な': 'NA', 'に': 'NI', 'ぬ': 'NU', 'ね': 'NE', 'の': 'NO',
+      'は': 'HA', 'ひ': 'HI', 'ふ': 'HU', 'へ': 'HE', 'ほ': 'HO',
+      'ば': 'BA', 'び': 'BI', 'ぶ': 'BU', 'べ': 'BE', 'ぼ': 'BO',
+      'ぱ': 'PA', 'ぴ': 'PI', 'ぷ': 'PU', 'ぺ': 'PE', 'ぽ': 'PO',
+      'ま': 'MA', 'み': 'MI', 'む': 'MU', 'め': 'ME', 'も': 'MO',
+      'や': 'YA', 'ゆ': 'YU', 'よ': 'YO',
+      'ら': 'RA', 'り': 'RI', 'る': 'RU', 'れ': 'RE', 'ろ': 'RO',
+      'わ': 'WA', 'を': 'WO', 'ん': 'NN',
+      // 小文字系
+      'ゃ': 'YA', 'ゅ': 'YU', 'ょ': 'YO',
+      'っ': 'TSU'
+    };
+    
+    // ローマ字に対応する指のマッピング（最初の文字で判定）
+    const romajiToFinger = {
+      'A': 'left-pinky', 'B': 'left-index', 'C': 'left-middle', 'D': 'left-middle',
+      'E': 'left-middle', 'F': 'left-index', 'G': 'left-index', 'H': 'right-index',
+      'I': 'right-middle', 'J': 'right-index', 'K': 'right-middle', 'L': 'right-ring',
+      'M': 'right-index', 'N': 'right-index', 'O': 'right-ring', 'P': 'right-pinky',
+      'Q': 'left-pinky', 'R': 'left-index', 'S': 'left-ring', 'T': 'left-index',
+      'U': 'right-index', 'V': 'left-index', 'W': 'left-ring', 'X': 'left-ring',
+      'Y': 'right-index', 'Z': 'left-pinky'
+    };
+
+    // お題をキーストロークに分解する関数
+    function analyzeKeystrokeProblem(problemText) {
+      const result = [];
+      for (let i = 0; i < problemText.length; i++) {
+        const char = problemText[i];
+        const romaji = hiraganaToRomaji[char] || char.toUpperCase();
+        const keystrokes = romaji.split(''); // "SHI" → ["S", "H", "I"]
+        
+        // 各キーストロークを個別に処理
+        keystrokes.forEach((key, keyIndex) => {
+          result.push({
+            hiragana: char,
+            originalRomaji: romaji,
+            keystroke: key,
+            finger: romajiToFinger[key] || 'thumb',
+            hiraganaIndex: i,
+            keystrokeIndex: keyIndex,
+            isLastInHiragana: keyIndex === keystrokes.length - 1
+          });
+        });
+      }
+      return result;
+    }
+
+    // 現在表示するキーストロークグループを決定
+    function getCurrentDisplayGroup(allKeystrokes, currentIndex) {
+      const maxDisplayKeys = 8; // 表示可能な最大キー数
+      let displayKeys = [];
+      let currentHiraganaIndex = allKeystrokes[currentIndex]?.hiraganaIndex || 0;
+      
+      // 現在のひらがなから開始
+      for (let i = currentIndex; i < allKeystrokes.length; i++) {
+        const key = allKeystrokes[i];
+        
+        // 新しいキーを追加した場合の長さをチェック
+        if (displayKeys.length < maxDisplayKeys) {
+          displayKeys.push(key);
+          
+          // ひらがな完了ポイントでの区切りを確認
+          if (key.isLastInHiragana && displayKeys.length >= 4) {
+            // 適切な区切りポイントで停止
+            break;
+          }
+        } else {
+          // 最大表示数に達した場合、ひらがな完了まで待つ
+          if (key.isLastInHiragana) {
+            break;
+          }
+        }
+      }
+      
+      return displayKeys;
+    }
+
+    // ナビゲーション表示パターン（フォールバック用）
+    const navPatterns = {
+      default: [
+        { main: 'あ', sub: 'ひらがな' },
+        { main: 'ア', sub: 'カタカナ' },
+        { main: 'A1', sub: '英数字' },
+        { main: '＠！', sub: '記号' }
+      ],
+      shi: [
+        { main: 'SHI', sub: 'し' },
+        { main: '', sub: '' },
+        { main: '', sub: '' },
+        { main: '', sub: '' }
+      ],
+      nn: [
+        { main: 'NN', sub: 'ん' },
+        { main: '', sub: '' },
+        { main: '', sub: '' },
+        { main: '', sub: '' }
+      ],
+      bun: [
+        { main: 'BUN', sub: 'ぶん' },
+        { main: '', sub: '' },
+        { main: '', sub: '' },
+        { main: '', sub: '' }
+      ]
+    };
+
+    // お題文字を管理する関数
+    function initializeProblemChars(problemText) {
+      currentProblemText = problemText;
+      currentProblemChars = problemText.split('');
+      displayedChars = [];
+      
+      // スペースのナビゲーションを追加
+      const spacePattern = /\s/;
+      const extendedKeystrokesData = [];
+      
+      for (let i = 0; i < currentProblemChars.length; i++) {
+        const char = currentProblemChars[i];
+        
+        if (spacePattern.test(char)) {
+          // スペースキーの処理
+          extendedKeystrokesData.push({
+            hiragana: char,
+            originalRomaji: 'SPACE',
+            keystroke: 'SPACE',
+            finger: 'thumb',
+            hiraganaIndex: i,
+            keystrokeIndex: 0,
+            isLastInHiragana: true
+          });
+        } else {
+          // 通常の文字の処理
+          const romaji = hiraganaToRomaji[char] || char.toUpperCase();
+          const keystrokes = romaji.split('');
+          
+          keystrokes.forEach((key, keyIndex) => {
+            extendedKeystrokesData.push({
+              hiragana: char,
+              originalRomaji: romaji,
+              keystroke: key,
+              finger: romajiToFinger[key] || 'thumb',
+              hiraganaIndex: i,
+              keystrokeIndex: keyIndex,
+              isLastInHiragana: keyIndex === keystrokes.length - 1
+            });
+          });
+        }
+      }
+      
+      return extendedKeystrokesData;
+    }
+    
+    // 黒帯表示を更新する関数
+    function updateUserInputDisplay() {
+      const typedCharsContainer = document.getElementById('typed-chars');
+      typedCharsContainer.innerHTML = '';
+      
+      // 現在表示すべき文字を表示
+      displayedChars.forEach((char, index) => {
+        const charSpan = document.createElement('span');
+        charSpan.textContent = char;
+        charSpan.className = 'typed-char';
+        typedCharsContainer.appendChild(charSpan);
+      });
+      
+      // カーソル表示
+      const cursorSpan = document.createElement('span');
+      cursorSpan.className = 'cursor';
+      cursorSpan.textContent = '|';
+      typedCharsContainer.appendChild(cursorSpan);
+    }
+
+    // キーストロークベースのナビゲーション生成
+    function generateKeystrokeNavigation(problemText) {
+      // お題文字を初期化
+      currentKeystrokesData = initializeProblemChars(problemText);
+      currentKeystrokeIndex = 0;
+      
+      // ナビゲーションを更新
+      updateKeystrokeNavigation();
+      
+      // 黒帯表示を初期化
+      updateUserInputDisplay();
+      
+      // 最初のキーをハイライト
+      highlightCurrentKey();
+    }
+    
+    // キーストロークナビゲーション表示を更新
+    function updateKeystrokeNavigation() {
+      const navContainer = document.getElementById('input-navigation');
+      
+      // 現在表示するキーストロークグループを取得
+      const displayKeys = getCurrentDisplayGroup(currentKeystrokesData, currentKeystrokeIndex);
+      
+      // 既存のナビゲーションアイテムをクリア
+      navContainer.innerHTML = '';
+      
+      // 各キーストロークに対してナビゲーションアイテムを生成
+      displayKeys.forEach((keyData, displayIndex) => {
+        const actualIndex = currentKeystrokeIndex + displayIndex;
+        const navItem = document.createElement('div');
+        navItem.id = `nav-item-${displayIndex + 1}`;
+        navItem.className = 'input-nav-item';
+        navItem.setAttribute('data-finger', keyData.finger);
+        navItem.setAttribute('data-keystroke-index', actualIndex);
+        
+        // 状態判定
+        let status = 'upcoming';
+        if (actualIndex < currentKeystrokeIndex) {
+          status = 'completed';
+        } else if (actualIndex === currentKeystrokeIndex) {
+          status = 'current';
+        }
+        navItem.setAttribute('data-status', status);
+        
+        // 基本スタイル設定
+        navItem.style.cssText = `
+          border-radius: 15px; 
+          width: 80px;
+          height: 80px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center; 
+          cursor: pointer; 
+          transition: all 0.3s ease;
+          margin: 0 0.5rem;
+          position: relative;
+        `;
+        
+        // 指の色を適用
+        const fingerColor = fingerColors[keyData.finger];
+        if (status === 'completed') {
+          navItem.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+          navItem.style.color = 'white';
+          navItem.style.opacity = '0.7';
+        } else if (status === 'current') {
+          navItem.style.background = `linear-gradient(135deg, ${fingerColor.bg} 0%, ${lightenColor(fingerColor.bg, 20)} 100%)`;
+          navItem.style.color = 'white';
+          navItem.style.opacity = '1';
+          navItem.style.animation = 'pulse 1.5s infinite';
+          navItem.style.border = `3px solid ${fingerColor.bg}`;
+          navItem.style.boxShadow = `0 4px 15px rgba(${fingerColor.rgba},0.3)`;
+        } else {
+          navItem.style.background = `linear-gradient(135deg, rgba(${fingerColor.rgba}, 0.4) 0%, rgba(${fingerColor.rgba}, 0.2) 100%)`;
+          navItem.style.color = '#333';
+          navItem.style.opacity = '0.6';
+          navItem.style.border = `2px solid rgba(${fingerColor.rgba}, 0.3)`;
+          navItem.style.boxShadow = `0 2px 8px rgba(${fingerColor.rgba},0.2)`;
+        }
+        
+        // メインテキスト（キーストローク）
+        const mainText = document.createElement('div');
+        mainText.className = 'nav-main-text';
+        
+        if (status === 'completed') {
+          mainText.innerHTML = '✓'; // チェックマーク
+          mainText.style.color = '#fff';
+          mainText.style.fontSize = '2rem';
+        } else {
+          mainText.textContent = keyData.keystroke;
+          mainText.style.color = status === 'current' ? '#fff' : 'rgba(255,255,255,0.7)';
+          mainText.style.fontSize = status === 'current' ? '2.2rem' : '2rem';
+        }
+        
+        mainText.style.cssText += `
+          font-weight: bold; 
+          margin-bottom: 0.2rem; 
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        `;
+        
+        // サブテキスト（ひらがな）
+        const subText = document.createElement('div');
+        subText.className = 'nav-sub-text';
+        
+        if (status === 'completed') {
+          subText.textContent = keyData.hiragana;
+          subText.style.opacity = '0.7';
+        } else {
+          subText.textContent = keyData.hiragana;
+          subText.style.opacity = status === 'current' ? '1' : '0.6';
+        }
+        
+        subText.style.cssText += `
+          font-size: 0.9rem; 
+          color: #fff; 
+          font-weight: 600; 
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        `;
+        
+        navItem.appendChild(mainText);
+        navItem.appendChild(subText);
+        navContainer.appendChild(navItem);
+      });
+    }
+    
+    // キーストロークスタイルを適用する関数
+    function applyKeystrokeStyles() {
+      document.querySelectorAll('.input-nav-item').forEach(item => {
+        const finger = item.getAttribute('data-finger');
+        const status = item.getAttribute('data-status');
+        
+        if (status === 'completed') {
+          item.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+          item.style.color = 'white';
+          item.style.opacity = '0.7';
+          item.style.animation = 'none';
+        } else if (status === 'current') {
+          const fingerColor = getFingerColor(finger);
+          item.style.background = `linear-gradient(135deg, ${fingerColor} 0%, ${lightenColor(fingerColor, 20)} 100%)`;
+          item.style.color = 'white';
+          item.style.opacity = '1';
+          item.style.animation = 'pulse 1.5s infinite';
+        } else {
+          // upcoming
+          const fingerColor = getFingerColor(finger);
+          item.style.background = `linear-gradient(135deg, ${fingerColor}40 0%, ${lightenColor(fingerColor, 30)}40 100%)`;
+          item.style.color = '#333';
+          item.style.opacity = '0.6';
+          item.style.animation = 'none';
+        }
+      });
+    }
+    
+    // キー入力検証関数
+    function validateKeystroke(inputKey) {
+      if (currentKeystrokeIndex >= currentKeystrokesData.length) {
+        return 'completed';
+      }
+      
+      const expectedKey = currentKeystrokesData[currentKeystrokeIndex].keystroke;
+      
+      if (inputKey.toUpperCase() === expectedKey.toUpperCase()) {
+        // 正解
+        // 入力した文字を黒帯に追加
+        if (currentKeystrokesData[currentKeystrokeIndex].isLastInHiragana) {
+          displayedChars.push(currentKeystrokesData[currentKeystrokeIndex].hiragana);
+          updateUserInputDisplay();
+        }
+        
+        currentKeystrokeIndex++;
+        updateKeystrokeNavigation();
+        
+        // キーボードハイライトを更新
+        if (currentKeystrokeIndex < currentKeystrokesData.length) {
+          highlightCurrentKey();
+        } else {
+          // レッスン完了時にハイライトをクリア
+          clearKeyboardHighlight();
+          // カーソルを非表示
+          document.getElementById('current-input').style.display = 'none';
+          // 1秒後に完了メッセージを表示
+          setTimeout(() => {
+            showCompletionMessage();
+          }, 1000);
+        }
+        
+        return 'correct';
+      } else {
+        // 不正解
+        showKeystrokeError();
+        triggerErrorAnimation();
+        return 'incorrect';
+      }
+    }
+    
+
+    
+    // キーストロークエラー表示
+    function showKeystrokeError() {
+      const currentNavItem = document.querySelector('[data-status="current"]');
+      if (currentNavItem) {
+        // エラーアニメーション
+        currentNavItem.style.animation = 'shake 0.5s ease-in-out';
+        currentNavItem.style.background = 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
+        
+        setTimeout(() => {
+          currentNavItem.style.animation = 'pulse 1.5s infinite';
+          applyKeystrokeStyles(); // 元のスタイルに戻す
+        }, 500);
+      }
+    }
+    
+    // 現在のキーをハイライトする関数
+    function highlightCurrentKey() {
+      // 前回のハイライトをクリア
+      clearKeyboardHighlight();
+      
+      if (currentKeystrokeIndex >= currentKeystrokesData.length) return;
+      
+      const currentKeystroke = currentKeystrokesData[currentKeystrokeIndex];
+      const keystroke = currentKeystroke.keystroke;
+      const finger = currentKeystroke.finger;
+      
+      // キーボードキーのハイライト
+      highlightKeyboardKey(keystroke);
+      
+      // 運指レジェンドのハイライト
+      highlightFingerLegend(finger);
+    }
+    
+    // キーボードキーをハイライトする関数
+    function highlightKeyboardKey(keystroke) {
+      // キーコードを取得
+      const keyCode = getKeyCodeFromKeystroke(keystroke);
+      if (!keyCode) return;
+      
+      // キーボード要素を取得
+      const keyElement = document.querySelector(`.key[data-code="${keyCode}"]`);
+      if (keyElement) {
+        keyElement.classList.add('key-highlight');
+        // キーの色を指の色に合わせる
+        const fingerType = getFingerForKeystroke(keystroke);
+        if (fingerType) {
+          const fingerColor = fingerColors[fingerType]?.bg || '#28a745';
+          keyElement.style.backgroundColor = fingerColor;
+          keyElement.style.color = '#fff';
+          keyElement.style.boxShadow = `0 0 10px ${fingerColor}`;
+          keyElement.style.animation = 'pulse 1.5s infinite';
+        }
+      }
+    }
+    
+    // 運指レジェンドをハイライトする関数
+    function highlightFingerLegend(fingerType) {
+      // 前回のハイライトをクリア
+      document.querySelectorAll('.finger-shape').forEach(shape => {
+        shape.classList.remove('finger-highlight');
+        shape.style.boxShadow = '';
+        shape.style.backgroundColor = '';
+        shape.style.borderColor = '';
+      });
+
+      const fingerClass = `finger-${fingerType}`;
+      const fingerElement = document.querySelector(`.${fingerClass}`);
+      if (fingerElement) {
+        fingerElement.classList.add('finger-highlight');
+        const fingerColor = fingerColors[fingerType]?.bg || '#28a745';
+        fingerElement.style.backgroundColor = fingerColor;
+        fingerElement.style.borderColor = fingerColor;
+        fingerElement.style.boxShadow = `0 0 10px ${fingerColor}`;
+      }
+    }
+    
+    // キーボードハイライトをクリアする関数
+    function clearKeyboardHighlight() {
+      document.querySelectorAll('.key').forEach(key => {
+        key.classList.remove('key-highlight');
+        key.style.backgroundColor = '';
+        key.style.color = '';
+        key.style.boxShadow = '';
+        key.style.animation = '';
+      });
+      
+      // 運指レジェンドのハイライトもクリア
+      document.querySelectorAll('.finger-shape').forEach(shape => {
+        shape.classList.remove('finger-highlight');
+      });
+    }
+    
+    // キーストロークから対応する指を取得する関数
+    function getFingerForKeystroke(keystroke) {
+      const key = keystroke.toUpperCase();
+      return romajiToFinger[key] || 'thumb';
+    }
+    
+    // キーストロークからキーコードを取得する関数
+    function getKeyCodeFromKeystroke(keystroke) {
+      const keyMap = {
+        'A': 'KeyA', 'B': 'KeyB', 'C': 'KeyC', 'D': 'KeyD', 'E': 'KeyE',
+        'F': 'KeyF', 'G': 'KeyG', 'H': 'KeyH', 'I': 'KeyI', 'J': 'KeyJ',
+        'K': 'KeyK', 'L': 'KeyL', 'M': 'KeyM', 'N': 'KeyN', 'O': 'KeyO',
+        'P': 'KeyP', 'Q': 'KeyQ', 'R': 'KeyR', 'S': 'KeyS', 'T': 'KeyT',
+        'U': 'KeyU', 'V': 'KeyV', 'W': 'KeyW', 'X': 'KeyX', 'Y': 'KeyY', 'Z': 'KeyZ',
+        '0': 'Digit0', '1': 'Digit1', '2': 'Digit2', '3': 'Digit3', '4': 'Digit4',
+        '5': 'Digit5', '6': 'Digit6', '7': 'Digit7', '8': 'Digit8', '9': 'Digit9',
+        'SPACE': 'Space'
+      };
+      return keyMap[keystroke.toUpperCase()];
+    }
+    
+    // ナビゲーションアイテムにキーストローク用スタイルを適用
+    function applyKeystrokeStyles() {
+      const navItems = document.querySelectorAll('.input-nav-item');
+      navItems.forEach((item, index) => {
+        const status = item.getAttribute('data-status');
+        const finger = item.getAttribute('data-finger');
+        
+        if (status === 'completed') {
+          item.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+          item.style.color = 'white';
+          item.style.opacity = '0.7';
+          item.style.animation = 'none';
+        } else if (status === 'current') {
+          const fingerColor = getFingerColor(finger);
+          item.style.background = `linear-gradient(135deg, ${fingerColor} 0%, ${lightenColor(fingerColor, 20)} 100%)`;
+          item.style.color = 'white';
+          item.style.opacity = '1';
+          item.style.animation = 'pulse 1.5s infinite';
+        } else {
+          // upcoming
+          const fingerColor = getFingerColor(finger);
+          item.style.background = `linear-gradient(135deg, ${fingerColor}40 0%, ${lightenColor(fingerColor, 30)}40 100%)`;
+          item.style.color = '#333';
+          item.style.opacity = '0.6';
+          item.style.animation = 'none';
+        }
+      });
+    }
+    
+    // 指の色を取得する関数
+    function getFingerColor(finger) {
+      const fingerColors = {
+        'left-pinky': '#ff0000',
+        'left-ring': '#ffa500',
+        'left-middle': '#ffd800',
+        'left-index': '#00c000',
+        'right-index': '#00d8d8',
+        'right-middle': '#0040ff',
+        'right-ring': '#8000ff',
+        'right-pinky': '#ff80b2',
+        'thumb': '#808080'
+      };
+      return fingerColors[finger] || '#808080';
+    }
+
+    // ナビゲーション表示を更新（既存のパターン用）
+    function updateNavDisplay(pattern) {
+      const navData = navPatterns[pattern] || navPatterns.default;
+      
+      navData.forEach((data, index) => {
+        const item = document.getElementById(`nav-item-${index + 1}`);
+        if (item) {
+          const mainText = item.querySelector('.nav-main-text');
+          const subText = item.querySelector('.nav-sub-text');
+          
+          if (data.main || data.sub) {
+            mainText.textContent = data.main;
+            subText.textContent = data.sub;
+            item.style.opacity = '1';
+          } else {
+            mainText.textContent = '';
+            subText.textContent = '';
+            item.style.opacity = '0.3';
+          }
+        }
+      });
+    }
+
+    // テスト用表示切替関数（フォールバック用）
+    function testNavDisplay(pattern) {
+      // 特定のパターンでテスト
+      if (pattern === 'default') {
+        updateNavDisplay(pattern);
+      } else {
+        // テスト用の単一文字表示
+        const testProblems = {
+          'shi': 'し',
+          'nn': 'ん', 
+          'bun': 'ぶん'
+        };
+        const testProblem = testProblems[pattern];
+        if (testProblem) {
+          document.getElementById('current-problem').textContent = testProblem;
+          generateKeystrokeNavigation(testProblem);
+          highlightCurrentKey();
+        }
+      }
+    }
+
+    // レッスン選択時の処理
+    function onLessonSelect(lessonNumber) {
+      const problem = lessons[lessonNumber];
+      if (problem) {
+        document.getElementById('current-problem').textContent = problem;
+        
+        // キーストロークベースのナビゲーションを生成
+        generateKeystrokeNavigation(problem);
+        
+        // 最初のキーをハイライト
+        highlightCurrentKey();
+      }
+    }
+
+    // キーボードのハイライト表示
+    function displayCurrentProblem(problem) {
+      // キーボードの全てのキーからハイライトを削除
+      document.querySelectorAll('.key').forEach(key => {
+        key.classList.remove('highlighted', 'special-key');
+        key.style.boxShadow = '';
+      });
+
+      if (!problem) return;
+
+      // 次に押すべきキーをハイライト
+      const nextChar = problem.charAt(0); // 最初の文字を例にする
+      
+      // IME系のキーの判定
+      function isSpecialKey(keyCode) {
+        return ['Backquote', 'F7', 'F8', 'F10', 'KanaMode', 'Convert', 'NonConvert'].includes(keyCode);
+      }
+
+      // 特定のキーコードにハイライトを適用
+      const highlightKey = (keyCode) => {
+        const keyElement = document.querySelector(`[data-key="${keyCode}"]`);
+        if (keyElement) {
+          keyElement.classList.add('highlighted');
+          if (isSpecialKey(keyCode)) {
+            keyElement.classList.add('special-key');
+          }
+          
+          // 適切な色を設定
+          const fingerColor = getFingerColor(keyCode);
+          keyElement.style.boxShadow = `0 0 15px ${fingerColor}`;
+        }
+      };
+
+      // サンプル：「し」を入力するためのキーをハイライト
+      if (nextChar === 'し') {
+        highlightKey('KeyS');
+        highlightKey('KeyH');
+        highlightKey('KeyI');
+      }
+    }
+
+    // キーに対応する指の色を取得
+    function getFingerColor(keyCode) {
+      const keyToFinger = {
+        'KeyQ': 'left-pinky', 'KeyW': 'left-ring', 'KeyE': 'left-middle',
+        'KeyR': 'left-index', 'KeyT': 'left-index', 'KeyY': 'right-index',
+        'KeyU': 'right-index', 'KeyI': 'right-middle', 'KeyO': 'right-ring',
+        'KeyP': 'right-pinky', 'KeyA': 'left-pinky', 'KeyS': 'left-ring',
+        'KeyD': 'left-middle', 'KeyF': 'left-index', 'KeyG': 'left-index',
+        'KeyH': 'right-index', 'KeyJ': 'right-index', 'KeyK': 'right-middle',
+        'KeyL': 'right-ring', 'Semicolon': 'right-pinky', 'KeyZ': 'left-pinky',
+        'KeyX': 'left-ring', 'KeyC': 'left-middle', 'KeyV': 'left-index',
+        'KeyB': 'left-index', 'KeyN': 'right-index', 'KeyM': 'right-index',
+        'Comma': 'right-middle', 'Period': 'right-ring', 'Slash': 'right-pinky'
+      };
+      const fingerName = keyToFinger[keyCode] || 'thumb';
+      return fingerColors[fingerName] ? fingerColors[fingerName].bg : fingerColors['thumb'].bg;
+    }
+    
+    // ユーザー入力の監視
+    let userInput = '';
+    
+    // キーストローク検証関数
+    function validateKeystroke(key) {
+      if (!currentKeystrokesData || currentKeystrokeIndex >= currentKeystrokesData.length) {
+        return 'invalid';
+      }
+      
+      const expectedKeystroke = currentKeystrokesData[currentKeystrokeIndex];
+      const inputKey = key.toUpperCase();
+      
+      if (inputKey === expectedKeystroke.keystroke) {
+        // 正解の場合
+        currentKeystrokeIndex++;
+        
+        // ひらがなが完成した場合、黒帯に文字を追加
+        if (expectedKeystroke.isLastInHiragana) {
+          displayedChars.push(expectedKeystroke.hiragana);
+          // 黒帯表示を更新
+          updateUserInputDisplay();
+        }
+        
+        // ナビゲーションを更新
+        updateKeystrokeNavigation();
+        
+        // 次のキーをハイライト
+        highlightCurrentKey();
+        
+        // 全て完了したかチェック
+        if (currentKeystrokeIndex >= currentKeystrokesData.length) {
+          return 'completed';
+        }
+        
+        return 'correct';
+      } else {
+        // 不正解の場合
+        return 'incorrect';
+      }
+    }
+    
+    // キーボードと運指レジェンドのスタイルを追加する関数
+    function addKeyboardStyles() {
+      // キーボードキーのスタイル
+      const keyboardStyle = document.createElement('style');
+      keyboardStyle.textContent = `
+        .key {
+          transition: all 0.2s ease;
+        }
+        .key-highlight {
+          border: 2px solid #fff;
+          box-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+          transform: translateY(-3px);
+          z-index: 10;
+        }
+      `;
+      document.head.appendChild(keyboardStyle);
+      
+      // 運指レジェンドのスタイル
+      const fingerStyle = document.createElement('style');
+      fingerStyle.textContent = `
+        .finger-shape {
+          transition: all 0.3s ease;
+        }
+        .finger-highlight {
+           box-shadow: 0 0 15px rgba(255, 255, 255, 0.85);
+           outline: 3px solid #fff;
+        }
+      `;
+      document.head.appendChild(fingerStyle);
+    }
+    
+    // ユーザー入力イベントリスナー
+    document.addEventListener('keydown', function(event) {
+      // 特殊キーを除外
+      if (event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      
+      // 英数字キー、スペースキーの処理
+      if (event.key.match(/^[a-zA-Z]$/) || event.key === ' ') {
+        // キーストロークデータが存在する場合のみ処理
+        if (currentKeystrokesData && currentKeystrokesData.length > 0) {
+          // スペースキーの場合は特別な処理
+          const inputKey = event.key === ' ' ? 'SPACE' : event.key.toUpperCase();
+          
+          // キーストローク検証
+          const result = validateKeystroke(inputKey);
+          
+          if (result === 'correct') {
+            // 正解の場合は特に処理なし（黒帯更新はvalidateKeystroke内で実行済み）
+          } else if (result === 'completed') {
+            // 完了の場合
+            console.log('レッスン完了！');
+            // 最後の文字が表示されてから1秒後に完了メッセージを表示
+            setTimeout(() => {
+              showCompletionMessage();
+            }, 1000);
+          } else if (result === 'incorrect') {
+            // 不正解の場合、エラーアニメーションとオーバーレイを表示
+            triggerErrorAnimation();
+            showErrorOverlay();
+          }
+        }
+        
+        event.preventDefault();
+      }
+    });
+    
+    // エラーアニメーションをトリガーする関数
+    function triggerErrorAnimation() {
+      const navContainer = document.getElementById('input-navigation');
+      if (navContainer) {
+        navContainer.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+          navContainer.style.animation = '';
+        }, 500);
+      }
+    }
+    
+    // エラーオーバーレイを表示する関数
+    function showErrorOverlay() {
+      const overlay = document.getElementById('error-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+      }
+    }
+    
+    // エラーオーバーレイを閉じる関数
+    function closeErrorOverlay() {
+      const overlay = document.getElementById('error-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+    
+    // 黒帯表示を更新する関数
+    function updateUserInputDisplay() {
+      const typedChars = document.getElementById('typed-chars');
+      const currentInput = document.getElementById('current-input');
+      
+      if (typedChars) {
+        typedChars.textContent = displayedChars.join('');
+      }
+      
+      // レッスンが進行中かつ完了していない場合のみカーソルを表示
+      if (currentInput) {
+        if (currentKeystrokesData && currentKeystrokeIndex < currentKeystrokesData.length) {
+          currentInput.style.display = 'inline';
+        } else {
+          currentInput.style.display = 'none';
+        }
+      }
+    }
+    
+    // ローカルストレージから設定を読み込み
+    function isInfoEnabled(){
+      return document.getElementById('info-show').checked;
+    }
+    
+    function loadSettings() {
+      const saved = localStorage.getItem('showCompletionMessage');
+      if(saved === 'hide'){
+        document.getElementById('info-hide').checked = true;
+      }else{
+        document.getElementById('info-show').checked = true; // デフォルト
+      }
+    }
+    
+    // 設定をローカルストレージに保存
+    function saveSettings(){
+      const value = isInfoEnabled()? 'show':'hide';
+      localStorage.setItem('showCompletionMessage', value);
+    }
+    
+    // 完了メッセージを表示する関数
+    function showCompletionMessage() {
+      if (!isInfoEnabled()) {
+        // 非表示設定の場合は終了
+        console.log('レッスン完了（メッセージ非表示）');
+        return;
+      }
+      // 完了メッセージを表示する場合
+      const currentProblem = document.getElementById('current-problem');
+      if (currentProblem) {
+        currentProblem.style.background = '#d4edda';
+        currentProblem.style.color = '#155724';
+        currentProblem.innerHTML = `
+          <div style="margin-bottom: 1rem; font-size: 1.8rem; font-weight: bold;">レッスン完了！</div>
+          <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">おつかれ様でした！</div>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666; cursor: pointer;">
+              <input type="checkbox" id="dont-show-again" style="margin-right: 0.5rem;">
+              今後この表示を出さない
+            </label>
+          </div>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="restartLesson()" style="background: #28a745; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">もう一度</button>
+            <button onclick="nextLesson()" style="background: #007bff; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">次に進む</button>
+          </div>
+        `;
+      }
+    }
+    
+    // グローバルに公開して他スクリプトからも呼べるようにする
+    window.showCompletionMessage = showCompletionMessage;
+    
+    // 現在のレッスンを再スタートする関数
+    function restartLesson() {
+      // チェックボックスがチェックされていたら設定を更新
+      const dontShowAgain = document.getElementById('dont-show-again');
+      if (dontShowAgain && dontShowAgain.checked) {
+        document.getElementById('show-completion-message').checked = false;
+        saveSettings();
+      }
+      
+      // リセット処理を実行
+      displayedChars = [];
+      updateUserInputDisplay();
+      currentKeystrokeIndex = 0;
+      problemChars = []; // お題の文字データをリセット
+      
+      // お題表示エリアのスタイルを元に戻す
+      const currentProblem = document.getElementById('current-problem');
+      if (currentProblem) {
+        currentProblem.style.background = '#f8f9fa';
+        currentProblem.style.color = '#333';
+      }
+      
+      // 現在のレッスンを再開する
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect && lessonSelect.value && lessonSelect.value !== '') {
+        // レッスンが選択されている場合、即座にお題を表示
+        onLessonSelect(lessonSelect.value);
+      } else {
+        // レッスンが選択されていない場合は初期メッセージを表示
+        if (currentProblem) {
+          currentProblem.textContent = 'スタートボタンを押してください';
+        }
+        
+        const curriculumTitle = document.getElementById('curriculum-title');
+        if (curriculumTitle) {
+          curriculumTitle.textContent = 'レッスンを選択してください';
+        }
+      }
+    }
+    
+    // 次のレッスンに進む関数
+    function nextLesson() {
+      // チェックボックスがチェックされていたら設定を更新
+      const dontShowAgain = document.getElementById('dont-show-again');
+      if (dontShowAgain && dontShowAgain.checked) {
+        document.getElementById('show-completion-message').checked = false;
+        saveSettings();
+      }
+      
+      // リセット処理を実行
+      displayedChars = [];
+      updateUserInputDisplay();
+      currentKeystrokeIndex = 0;
+      
+      // お題表示エリアのスタイルと内容を元に戻す
+      const currentProblem = document.getElementById('current-problem');
+      if (currentProblem) {
+        currentProblem.style.background = '#f8f9fa';
+        currentProblem.style.color = '#333';
+        // 完了メッセージのHTMLをクリア
+        currentProblem.innerHTML = '';
+      }
+      
+      // 次のレッスンに進む
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect) {
+        const currentValue = parseInt(lessonSelect.value) || 1;
+        const nextValue = currentValue + 1;
+        
+        // 次のレッスンがあるかチェック
+        if (lessons[nextValue]) {
+          lessonSelect.value = nextValue;
+          onLessonSelect(nextValue);
+        } else {
+          // 最後のレッスンの場合、最初に戻る
+          lessonSelect.value = 1;
+          onLessonSelect(1);
+        }
+      }
+    }
+    
+    // 完了メッセージを閉じる関数（必要に応じて使用）
+    function closeCompletionMessage() {
+      // チェックボックスがチェックされていたら設定を更新
+      const dontShowAgain = document.getElementById('dont-show-again');
+      if (dontShowAgain && dontShowAgain.checked) {
+        document.getElementById('show-completion-message').checked = false;
+        saveSettings();
+      }
+      
+      // リセット処理を実行
+      displayedChars = [];
+      updateUserInputDisplay();
+      currentKeystrokeIndex = 0;
+      
+      // 最初のお題表示に戻す
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect && lessonSelect.value) {
+        onLessonSelect();
+      }
+    }
+
+    // 現在のキーと運指をハイライト（共通ヘルパーを使用）
+    function highlightCurrentKey() {
+      // 共通処理で前回のハイライトをクリア
+      clearKeyboardHighlight();
+
+      if (!currentKeystrokesData || currentKeystrokeIndex >= currentKeystrokesData.length) return;
+
+      const { keystroke, finger } = currentKeystrokesData[currentKeystrokeIndex];
+      // キーボードキーのハイライト
+      highlightKeyboardKey(keystroke);
+      // 運指レジェンドのハイライト
+      highlightFingerLegend(finger);
+    }
+    
+    // キーストロークからキーコードを取得する関数
+    function getKeyCodeFromKeystroke(keystroke) {
+      const keystrokeToKeyCode = {
+        'S': 'KeyS', 'H': 'KeyH', 'I': 'KeyI', 'N': 'KeyN', 'B': 'KeyB', 'U': 'KeyU',
+        'A': 'KeyA', 'K': 'KeyK', 'T': 'KeyT', 'O': 'KeyO', 'E': 'KeyE', 'R': 'KeyR',
+        'Y': 'KeyY', 'W': 'KeyW', 'G': 'KeyG', 'M': 'KeyM', 'D': 'KeyD', 'Z': 'KeyZ',
+        'C': 'KeyC', 'V': 'KeyV', 'F': 'KeyF', 'J': 'KeyJ', 'L': 'KeyL', 'P': 'KeyP',
+        'Q': 'KeyQ', 'X': 'KeyX', 'SPACE': 'Space'
+      };
+      return keystrokeToKeyCode[keystroke.toUpperCase()];
+    }
+    
+    // ページ読み込み時の初期化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初期レッスンを設定（動的ナビゲーションが生成される）
+      onLessonSelect(1);
+      
+      // キーボードと運指レジェンドのスタイルを追加
+      addKeyboardStyles();
+    });
   </script>
 
   <!-- 既存 JS -->
   <script src="js/keyboard-render.js"></script>
   <script src="../js/windsurf-config.js"></script>
   <script src="../js/mode3-win.js" defer></script>
-  <!-- FAQ Modal (hidden) -->
-  <dialog id="faqModal" style="padding:1rem;max-width:400px;">
+  
+  <!-- 初期化スクリプト -->
+  <script>
+    // ページ読み込み時の初期化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 設定をロード
+      loadSettings();
+      
+      // キーボード入力のイベントリスナーを追加
+      document.addEventListener('keydown', function(event) {
+        // 特殊キーは無視（Ctrl, Alt, Shift, Tab, etc.）
+        if (event.ctrlKey || event.altKey || event.metaKey || event.key === 'Tab') {
+          return;
+        }
+        
+        // フォームフィールドでの入力は処理しない
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+          return;
+        }
+        
+        // mode3-win.jsのイベントハンドラと競合しないようにするため、
+        // カスタムイベントを発行して処理済みであることを示す
+        const customEvent = new CustomEvent('lesson1-keydown-handled', {
+          bubbles: true,
+          cancelable: true,
+          detail: { originalEvent: event }
+        });
+        event.target.dispatchEvent(customEvent);
+        
+        // 入力されたキーを検証
+        const result = validateKeystroke(event.key);
+        
+        // 結果に応じた処理
+        if (result === 'completed') {
+          // レッスン完了時の処理
+          clearKeyboardHighlight();
+        } else if (result === 'incorrect') {
+          // 不正解時の処理
+          // エラーアニメーションはvalidateKeystroke内で処理済み
+        }
+        
+        // デフォルトの動作を防止（最後に行う）
+        event.preventDefault();
+        event.stopPropagation();
+      }, true);
+      
+      // 設定チェックボックスのイベントリスナーを設定
+      const showCompletionCheckbox = document.getElementById('show-completion-message');
+      if (showCompletionCheckbox) {
+        showCompletionCheckbox.addEventListener('change', saveSettings);
+      }
+      
+      // Start ボタンを押したタイミングで現在の設定を保存
+      const startButton = document.getElementById('start-btn');
+      if(startButton){
+        startButton.addEventListener('click', saveSettings);
+      }
+      
+      // レッスン選択ドロップダウンのイベントハンドラーを追加
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect) {
+        lessonSelect.onchange = function() {
+          if (this.value && this.value !== '') {
+            // レッスンが選択された場合、カリキュラムブロックを更新するが、まだお題は表示しない
+            const curriculumTitle = document.getElementById('curriculum-title');
+            if (curriculumTitle) {
+              const lessonTitle = this.options[this.selectedIndex].text;
+              curriculumTitle.textContent = lessonTitle;
+            }
+            
+            // お題表示エリアにスタートの指示を表示
+            const currentProblem = document.getElementById('current-problem');
+            if (currentProblem) {
+              currentProblem.textContent = 'スタートボタンを押してください';
+            }
+          } else {
+            // 選択解除の場合、初期状態に戻す
+            const curriculumTitle = document.getElementById('curriculum-title');
+            if (curriculumTitle) {
+              curriculumTitle.textContent = 'レッスンを選択してください';
+            }
+            
+            const currentProblem = document.getElementById('current-problem');
+            if (currentProblem) {
+              currentProblem.textContent = 'スタートボタンを押してください';
+            }
+          }
+        };
+      }
+    });
+  </script>
+
+  <!-- ヘルプダイアログ -->
+  <dialog id="help-dialog" style="padding: 2rem; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-width: 500px;">
     <h3>よくある質問</h3>
     <p>F7 が効かない場合は Fn-Lock を解除するか、IME のキー設定をご確認ください。</p>
     <button onclick="this.parentElement.close()">閉じる</button>
   </dialog>
+
+
 
   <!-- Problem Engine -->
   <script src="js/problem-engine.js" defer></script>
