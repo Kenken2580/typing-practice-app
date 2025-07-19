@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "① 今日の日付",
+    "description": "今日の日付をIME切り替え・変換を使い分けて入力する練習です。",
+    "generator": "genTodayDateProblemSequence"
+  },
+  {
+    "id": 2,
+    "title": "② 年月日変換",
+    "description": "年月日の入力とスペースキーでの漢字変換を練習します。",
+    "generator": "genRandomDateProblemSequence"
+  },
+  {
+    "id": 3,
+    "title": "③ 半/全・Fキー変換",
+    "description": "半角/全角キーとF7/F8/F9/F10キーを使った変換の基礎を練習します。",
+    "generator": "genFKeyConversionProblemSequence"
+  },
+  {
+    "id": 4,
+    "title": "④ 半/全とスペース変換の複合",
+    "description": "半角と全角の切り替え、スペースキーによる変換を組み合わせた練習です。",
+    "generator": "genMixedConversionProblem1Sequence"
+  },
+  {
+    "id": 5,
+    "title": "⑤ 半/全とFキー変換の複合",
+    "description": "半角と全角の切り替え、Fキーによる変換を組み合わせた練習です。",
+    "generator": "genMixedConversionProblem2Sequence"
+  },
+  {
+    "id": 6,
+    "title": "⑥ スペースとFキー変換の複合",
+    "description": "スペースキーとFキーによる変換を組み合わせた練習です。",
+    "generator": "genMixedConversionProblem3Sequence"
+  },
+  {
+    "id": 7,
+    "title": "⑦ 総合練習",
+    "description": "全ての要素を組み合わせた、実践的な総合練習です。",
+    "generator": "genComprehensiveProblemSequence"
+  },
+  {
+    "id": 8,
+    "title": "⑧ 早口言葉",
+    "description": "リズム感と指の独立性を鍛える早口言葉の練習です。",
+    "generator": "genTongueTwisterProblemSequence"
+  },
+  {
+    "id": 9,
+    "title": "⑨ AI話題特化",
+    "description": "生成AIに関する専門用語の入力を効率的に行う練習です。",
+    "generator": "genAITerminologyProblemSequence"
+  },
+  {
+    "id": 10,
+    "title": "⑩ 長文練習",
+    "description": "長文の入力速度と正確性を高める練習です。",
+    "generator": "genLongPassageProblemSequence"
+  }
+]

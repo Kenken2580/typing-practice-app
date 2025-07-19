@@ -5,10 +5,8 @@
   <title>Mode 3 – IME 切替レッスン (Windows)</title>
 
   <!-- 既存スタイル -->
-  <link rel="stylesheet" href="../../mode1/css/style.css">
-  <link rel="stylesheet" href="../css/lesson-display.css">
-  <link rel="stylesheet" href="../css/typed-display.css">
-  <link rel="stylesheet" href="../../mode1/css/beginner.css">
+  <!-- <link rel="stylesheet" href="../css/lesson-display.css"> -->
+  <!-- <link rel="stylesheet" href="../css/typed-display.css"> -->
   <!-- mode3独自のスタイルで上書き -->
   <link rel="stylesheet" href="css/style.css">
   <!-- 新しい学習システム専用CSS -->
@@ -18,6 +16,9 @@
   <style>
     /* body の余白を消す（上に 8px 空くのを防ぐ） */
     body { margin: 0; }
+    
+    /* カウントダウンオーバーレイを非表示 */
+    #countdown-overlay { display: none !important; }
     
     /* エラーアニメーション（震えアニメーション） */
     @keyframes shake {
@@ -153,7 +154,7 @@
 
   <!-- B案: ユーザー入力表示エリア (黒帯) -->
   <div id="user-input-display" style="background: #333; color: #00ff00; font-family: 'Courier New', monospace; font-size: 2.5rem; padding: 1.5rem 2rem; margin: 0 2rem 2rem; border-radius: 4px; min-height: 70px; text-align: center; overflow-x: auto; display: flex; align-items: center; justify-content: center;">
-    <span id="typed-chars" style="letter-spacing: 0.3em; font-weight: bold;"></span><span id="current-input" style="background: #555; padding: 0 4px; margin-left: 0.2em; display: none;">_</span>
+    <span id="typed-chars" style="letter-spacing: 0.3em; font-weight: bold;"></span>
   </div>
   
   <!-- エラーオーバーレイ -->
@@ -203,20 +204,7 @@
         <div id="lesson-description" style="font-size: 0.9rem; color: #666;"></div>
       </div>
       
-      <!-- 設定セクション -->
-      <div id="settings-section" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; border: 1px solid #dee2e6;">
-        <div style="font-weight: bold; color: #666; margin-bottom: 0.5rem; font-size: 0.9rem;">設定</div>
-        <div style="margin-bottom: 0.5rem; display:flex; gap:12px; align-items:center; font-size:0.8rem; color:#666;">
-          <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="radio" name="info-setting" id="info-show" value="show" checked style="margin-right:0.5rem;">
-            インフォメーション表示
-          </label>
-          <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="radio" name="info-setting" id="info-hide" value="hide" style="margin-right:0.5rem;">
-            非表示
-          </label>
-        </div>
-      </div>
+
       
     </div>
     
@@ -284,11 +272,8 @@
         // 選択されたレッスンを開始
         onLessonSelect(lessonSelect.value);
       } else {
-        // レッスンが選択されていない場合のメッセージ
-        const currentProblem = document.getElementById('current-problem');
-        if (currentProblem) {
-          currentProblem.textContent = 'レッスンを選択してください';
-        }
+        // レッスンが選択されていない場合は何もしない（新しいオーバーレイが処理する）
+        console.log('レッスンが選択されていません');
       }
     });
 
@@ -335,26 +320,60 @@
       10: { title: "⑩ 漢字", description: "漢字変換の練習です", problem: "日本語入力変換練習" }
     };
 
+    // ユーザー入力表示を更新する関数
+    function updateInputDisplay() {
+      const userInputElement = document.getElementById('user-input');
+      if (userInputElement && displayedChars) {
+        userInputElement.textContent = displayedChars.join('');
+      }
+    }
+
+    window.updateInputDisplay = updateInputDisplay;
+
     // レッスン選択イベント
-    document.getElementById('lesson-selector').addEventListener('change', function(e) {
+    document.getElementById('lesson-select').addEventListener('change', function(e) {
       const lessonId = e.target.value;
       const lesson = lessonData[lessonId];
       
       if (lesson) {
         // お題表示を更新
-        document.getElementById('current-problem').textContent = lesson.problem;
+        const currentProblem = document.getElementById('current-problem');
+        if (currentProblem) {
+          currentProblem.textContent = lesson.problem;
+        }
         
         // カリキュラムブロック情報を更新
-        document.getElementById('curriculum-title').textContent = lesson.title;
-        document.getElementById('lesson-title').textContent = lesson.title;
-        document.getElementById('lesson-description').textContent = lesson.description;
+        const curriculumTitle = document.getElementById('curriculum-title');
+        if (curriculumTitle) {
+          curriculumTitle.textContent = lesson.title;
+        }
+        
+        const lessonTitle = document.getElementById('lesson-title');
+        if (lessonTitle) {
+          lessonTitle.textContent = lesson.title;
+        }
+        
+        const lessonDescription = document.getElementById('lesson-description');
+        if (lessonDescription) {
+          lessonDescription.textContent = lesson.description;
+        }
         
         // 入力表示をリセット
-        document.getElementById('typed-chars').textContent = '';
-        document.getElementById('current-input').textContent = '';
+        const typedChars = document.getElementById('typed-chars');
+        if (typedChars) {
+          typedChars.textContent = '';
+        }
+        
+        const currentInput = document.getElementById('current-input');
+        if (currentInput) {
+          currentInput.textContent = '';
+        }
         
         // 進捗をリセット
-        document.getElementById('progress-fill').style.width = '0%';
+        const progressFill = document.getElementById('progress-fill');
+        if (progressFill) {
+          progressFill.style.width = '0%';
+        }
       }
     });
 
@@ -654,7 +673,7 @@
       displayKeys.forEach((keyData, displayIndex) => {
         const actualIndex = currentKeystrokeIndex + displayIndex;
         const navItem = document.createElement('div');
-        navItem.id = `nav-item-${displayIndex + 1}`;
+        navItem.id = `nav-item-${displayIndex}`;
         navItem.className = 'input-nav-item';
         navItem.setAttribute('data-finger', keyData.finger);
         navItem.setAttribute('data-keystroke-index', actualIndex);
@@ -803,8 +822,6 @@
         } else {
           // レッスン完了時にハイライトをクリア
           clearKeyboardHighlight();
-          // カーソルを非表示
-          document.getElementById('current-input').style.display = 'none';
           // 1秒後に完了メッセージを表示
           setTimeout(() => {
             showCompletionMessage();
@@ -1252,24 +1269,18 @@
       }
     }
     
-    // ローカルストレージから設定を読み込み
-    function isInfoEnabled(){
-      return document.getElementById('info-show').checked;
+    // インフォメーション表示設定を確認
+    function isInfoEnabled() {
+      // 常にインフォメーションを表示
+      return true;
     }
     
-    function loadSettings() {
-      const saved = localStorage.getItem('showCompletionMessage');
-      if(saved === 'hide'){
-        document.getElementById('info-hide').checked = true;
-      }else{
-        document.getElementById('info-show').checked = true; // デフォルト
+    // レッスン完了メッセージを表示
+    function showCompletionMessage() {
+      if (isInfoEnabled()) {
+        // シンプルなアラートで表示
+        alert('レッスン完了！ おつかれさまでした！');
       }
-    }
-    
-    // 設定をローカルストレージに保存
-    function saveSettings(){
-      const value = isInfoEnabled()? 'show':'hide';
-      localStorage.setItem('showCompletionMessage', value);
     }
     
     // 完了メッセージを表示する関数
@@ -1287,12 +1298,6 @@
         currentProblem.innerHTML = `
           <div style="margin-bottom: 1rem; font-size: 1.8rem; font-weight: bold;">レッスン完了！</div>
           <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">おつかれ様でした！</div>
-          <div style="margin-bottom: 1rem;">
-            <label style="display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666; cursor: pointer;">
-              <input type="checkbox" id="dont-show-again" style="margin-right: 0.5rem;">
-              今後この表示を出さない
-            </label>
-          </div>
           <div style="display: flex; gap: 1rem; justify-content: center;">
             <button onclick="restartLesson()" style="background: #28a745; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">もう一度</button>
             <button onclick="nextLesson()" style="background: #007bff; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">次に進む</button>
@@ -1306,13 +1311,6 @@
     
     // 現在のレッスンを再スタートする関数
     function restartLesson() {
-      // チェックボックスがチェックされていたら設定を更新
-      const dontShowAgain = document.getElementById('dont-show-again');
-      if (dontShowAgain && dontShowAgain.checked) {
-        document.getElementById('show-completion-message').checked = false;
-        saveSettings();
-      }
-      
       // リセット処理を実行
       displayedChars = [];
       updateUserInputDisplay();
@@ -1434,25 +1432,170 @@
     
     // ページ読み込み時の初期化
     document.addEventListener('DOMContentLoaded', function() {
-      // 初期レッスンを設定（動的ナビゲーションが生成される）
-      onLessonSelect(1);
-      
       // キーボードと運指レジェンドのスタイルを追加
       addKeyboardStyles();
+      
+      // ナビゲーションを初期化するためにダミーレッスンを設定
+      onLessonSelect(1);
+      
+      // その後、レッスン選択をリセットしてオーバーレイを表示
+      setTimeout(() => {
+        const lessonSelect = document.getElementById('lesson-select');
+        if (lessonSelect) {
+          lessonSelect.value = '';
+        }
+        
+        // お題表示をクリア
+        try {
+          const currentProblem = document.getElementById('current-problem');
+          if (currentProblem) {
+            currentProblem.textContent = '';
+          }
+        } catch (e) {
+          console.log('current-problem 要素のクリアでエラー:', e);
+        }
+        
+        // ナビゲーションをクリア
+        try {
+          const navigationContainer = document.querySelector('.navigation-container');
+          if (navigationContainer) {
+            navigationContainer.innerHTML = '';
+          }
+        } catch (e) {
+          console.log('ナビゲーションコンテナのクリアでエラー:', e);
+        }
+        
+        // カリキュラムタイトルをリセット
+        try {
+          const curriculumTitle = document.getElementById('curriculum-title');
+          if (curriculumTitle) {
+            curriculumTitle.textContent = 'レッスンを選択してください';
+          }
+        } catch (e) {
+          console.log('curriculum-title 要素のリセットでエラー:', e);
+        }
+        
+        console.log('初期化後のオーバーレイ表示を実行します');
+        showLessonSelectOverlay();
+      }, 100);
+      
+      // スタートボタンを初期状態で無効化
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.style.opacity = '0.5';
+        startBtn.style.cursor = 'not-allowed';
+        
+        startBtn.addEventListener('click', function() {
+          const lessonSelect = document.getElementById('lesson-select');
+          if (!lessonSelect || !lessonSelect.value || lessonSelect.value === '') {
+            // レッスンが選択されていない場合、オーバーレイを表示
+            showLessonSelectOverlay();
+          } else {
+            // レッスンが選択されている場合、レッスンを開始
+            startLesson();
+          }
+        });
+      }
+      
+      // レッスン選択ドロップダウンの変更イベント
+      const lessonSelect = document.getElementById('lesson-select');
+      if (lessonSelect) {
+        lessonSelect.addEventListener('change', function() {
+          if (this.value && this.value !== '') {
+            // レッスンが選択されたらスタートボタンを有効化
+            if (startBtn) {
+              startBtn.disabled = false;
+              startBtn.style.opacity = '1';
+              startBtn.style.cursor = 'pointer';
+            }
+            // オーバーレイがあれば削除
+            closeLessonSelectOverlay();
+          } else {
+            // レッスンが未選択ならスタートボタンを無効化
+            if (startBtn) {
+              startBtn.disabled = true;
+              startBtn.style.opacity = '0.5';
+              startBtn.style.cursor = 'not-allowed';
+            }
+            // オーバーレイを表示
+            showLessonSelectOverlay();
+          }
+        });
+      }
     });
+    
+    // レッスン選択オーバーレイを表示する関数
+    function showLessonSelectOverlay() {
+      console.log('showLessonSelectOverlay が呼ばれました');
+      try {
+        // 既存のオーバーレイがあれば削除
+        closeLessonSelectOverlay();
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'lesson-select-overlay';
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+          pointer-events: none;
+        `;
+        
+        const message = document.createElement('div');
+        message.style.cssText = `
+          background: rgba(255, 255, 255, 0.95);
+          padding: 1.5rem 2rem;
+          border-radius: 8px;
+          text-align: center;
+          font-size: 1.1rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          border: 2px solid #007bff;
+          pointer-events: none;
+        `;
+        message.innerHTML = `
+          <div style="color: #007bff; font-weight: bold; margin-bottom: 0.5rem;">レッスンを選択してください</div>
+          <div style="color: #666; font-size: 0.9rem;">右上のドロップダウンからレッスンを選択してください</div>
+        `;
+        
+        overlay.appendChild(message);
+        document.body.appendChild(overlay);
+        console.log('オーバーレイを作成しました');
+      } catch (e) {
+        console.error('オーバーレイ作成でエラー:', e);
+      }
+    }
+    
+    // レッスン選択オーバーレイを閉じる関数
+    function closeLessonSelectOverlay() {
+      const overlay = document.getElementById('lesson-select-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+    
+    // レッスンを開始する関数
+    function startLesson() {
+      // 既存のレッスン開始ロジックがあればここに追加
+      console.log('レッスンを開始します');
+    }
   </script>
 
   <!-- 既存 JS -->
   <script src="js/keyboard-render.js"></script>
-  <script src="../js/windsurf-config.js"></script>
-  <script src="../js/mode3-win.js" defer></script>
+  <!-- <script src="../js/windsurf-config.js"></script> -->
+  <!-- <script src="../js/mode3-win.js" defer></script> -->
   
   <!-- 初期化スクリプト -->
   <script>
     // ページ読み込み時の初期化
     document.addEventListener('DOMContentLoaded', function() {
-      // 設定をロード
-      loadSettings();
       
       // キーボード入力のイベントリスナーを追加
       document.addEventListener('keydown', function(event) {
@@ -1492,17 +1635,7 @@
         event.stopPropagation();
       }, true);
       
-      // 設定チェックボックスのイベントリスナーを設定
-      const showCompletionCheckbox = document.getElementById('show-completion-message');
-      if (showCompletionCheckbox) {
-        showCompletionCheckbox.addEventListener('change', saveSettings);
-      }
-      
-      // Start ボタンを押したタイミングで現在の設定を保存
-      const startButton = document.getElementById('start-btn');
-      if(startButton){
-        startButton.addEventListener('click', saveSettings);
-      }
+
       
       // レッスン選択ドロップダウンのイベントハンドラーを追加
       const lessonSelect = document.getElementById('lesson-select');
@@ -1535,6 +1668,57 @@
           }
         };
       }
+      
+      // インフォメーション表示設定のイベントリスナーを追加
+      const infoShowRadio = document.getElementById('info-show');
+      const infoHideRadio = document.getElementById('info-hide');
+      
+      if (infoShowRadio) {
+        infoShowRadio.addEventListener('change', function() {
+          if (this.checked) {
+            // インフォメーション表示をONに設定
+            localStorage.setItem('showInformation', 'true');
+          }
+        });
+      }
+      
+      if (infoHideRadio) {
+        infoHideRadio.addEventListener('change', function() {
+          if (this.checked) {
+            // インフォメーション表示をOFFに設定
+            localStorage.setItem('showInformation', 'false');
+          }
+        });
+      }
+      
+      // 初期設定を確認（デフォルトはON）
+      const showInformation = localStorage.getItem('showInformation');
+      console.log('Initializing radio buttons, localStorage value:', showInformation);
+      
+      // 強制的にデフォルト状態を設定
+      if (showInformation === 'false') {
+        // 明示的にOFFの場合のみOFFにする
+        if (infoShowRadio) {
+          infoShowRadio.checked = false;
+          console.log('Set info-show to false');
+        }
+        if (infoHideRadio) {
+          infoHideRadio.checked = true;
+          console.log('Set info-hide to true');
+        }
+      } else {
+        // デフォルトまたは明示的にONの場合（null, 'true', その他すべて）
+        if (infoShowRadio) {
+          infoShowRadio.checked = true;
+          console.log('Set info-show to true (default)');
+        }
+        if (infoHideRadio) {
+          infoHideRadio.checked = false;
+          console.log('Set info-hide to false (default)');
+        }
+        // localStorage にデフォルト値を保存
+        localStorage.setItem('showInformation', 'true');
+      }
     });
   </script>
 
@@ -1545,9 +1729,10 @@
     <button onclick="this.parentElement.close()">閉じる</button>
   </dialog>
 
-
-
-  <!-- Problem Engine -->
-  <script src="js/problem-engine.js" defer></script>
+  <!-- 必要なスクリプトファイルを正しい順序で読み込み -->
+  <script src="js/keyboard-render.js"></script>
+  <script src="js/problem-generators.js"></script>
+  <!-- <script src="../js/windsurf-config.js"></script> -->
+  <!-- <script src="../js/mode3-win.js"></script> -->
 </body>
 </html>
