@@ -228,19 +228,35 @@ h1 {
 #control-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0rem;
   order: 1;
   min-width: 120px; /* 値は調整してください */
   
   position: relative;
-  top: -55px; /* 前回の調整で適切な値に設定済みのはず */
+  top: -25px; /* 前回の調整で適切な値に設定済みのはず */
 
   /* ↓↓↓ ここに左右調整用のプロパティを追加します ↓↓↓ */
-  margin-left: 5px; /* 例: 左に20pxのマージンを追加して右にずらす */
+  margin-left: -20px; /* 例: 左に20pxのマージンを追加して右にずらす */
+
+/* ↓↓スタートボタンの背景のグレー枠 ↓↓↓ */
+  background-color: #f8f9fa; /* 薄いグレーの背景色 */
+  border-radius: 8px; /* 角丸の半径 */
+  padding: 1rem; /* 内側の余白 */
+  border: 1px solid #dee2e6; /* 薄い枠線 */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* わずかな影 */
+  /* ↑↑↑ ここまで ↑↑↑ */
+
   /* または */
   /* transform: translateX(20px); */ /* 例: 現在位置から右に20px移動 */
   /* または、負の値で左に移動: transform: translateX(-20px); */
 }
+
+/* Start/Reset/Skip ボタンのマージンをリセットし、gapによる制御を優先 */
+/* ↓↓↓ このルールは #control-buttons の外に、独立して記述します ↓↓↓ */
+#control-buttons button {
+  margin: 0 !important; /* これでボタンの上下左右の余白を強制的にゼロにします */
+}
+/* ↑↑↑ ここまで ↑↑↑ */
 
 /* ボタン共通スタイルを一つにまとめる */
 #control-buttons button{
